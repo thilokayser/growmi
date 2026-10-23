@@ -1,0 +1,45 @@
+blueprint:
+  name: Growmi – Add-on watchdog
+  description: >-
+    Reports when Growmi has not published its sensors for a while (add-on stopped or crashed). Uses the time of the
+    last report, because Home Assistant only changes the update time when a value changes. After a Home Assistant
+    restart there is no false alarm while the sensor does not exist yet.
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    silent_minutes:
+      name: Alarm when silent for (minutes)
+      default: 10
+      selector:
+        number:
+          min: 3
+          max: 120
+          unit_of_measurement: min
+    notify_service:
+      name: Notification service
+      description: For example notify.mobile_app_my_phone
+      selector:
+        text:
+mode: single
+trigger_variables:
+  silent_s: !input silent_minutes
+variables:
+  service: !input notify_service
+triggers:
+- trigger: template
+  value_template: >-
+    {{ states.sensor.growmi_pflanzen is not none and
+       (now() - states.sensor.growmi_pflanzen.last_reported).total_seconds() > silent_s * 60 }}
+actions:
+- action: persistent_notification.create
+  data:
+    title: Growmi
+    message: The add-on has not reported for a while. Please check Settings, Add-ons, Growmi.
+    notification_id: growmi_watchdog
+- action: "{{ service }}"
+  continue_on_error: true
+  data:
+    title: Growmi
+    message: The add-on has not reported for a while.

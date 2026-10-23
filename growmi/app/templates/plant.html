@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ p.sorte }}{% endblock %}
+{% block content %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<h1>{{ p.sorte }} <span class="chip ph-{{ current }}">{{ tr(current) }}</span>{% if p.typ %} <span class="chip chip-typ">{{ p.typ|typ }}</span>{% endif %}</h1>
+{% include "_phase_banner.html" %}
+<p class="muted">{{ p.hersteller }} · Platz {{ p.slot }} · Keimdatum {{ p.keimdatum|dt }} · Topf {{ p.topf or '–' }}
+  {% if p.ausgezogen_am %}· ausgezogen {{ p.ausgezogen_am|dt }}{% endif %}</p>
+{% if p.notiz %}<p>{{ p.notiz }}</p>{% endif %}
+<h2>Tagebuch</h2>
+<form method="post" action="{{ root }}/pflanze/{{ p.id }}/notiz">
+  <label>Neue Notiz <textarea name="text" rows="3" required placeholder="Was ist heute aufgefallen?"></textarea></label>
+  <label>Problem-Tag (optional) <select name="tag"><option value="">–</option>{% for t in tags %}<option value="{{ t }}">{{ tr(t) }}</option>{% endfor %}</select></label>
+  <button class="btn">Notiz speichern</button>
+</form>
+{% if journal %}
+<ul class="journal">
+  {% for e in journal %}<li><time class="num">{{ e.ts|dt }}</time> {{ e.text }}</li>{% endfor %}
+</ul>
+{% endif %}
+<table class="num">
+  <tr><th scope="row">Wasser gesamt</th><td>{{ '%.1f' % totals.water_l }} L</td></tr>
+  {% for name, ml in totals.fert_ml.items() %}<tr><th scope="row">{{ name }}</th><td>{{ '%.1f' % ml }} ml</td></tr>{% endfor %}
+  <tr><th scope="row">Ertrag trocken</th><td>{{ '%g g' % totals.trocken_g if totals.trocken_g else '–' }}{% if p.nass_g %} (nass {{ '%g' % p.nass_g }} g){% endif %}</td></tr>
+  {% if p.bew_geschmack or p.bew_wirkung or p.bew_aufwand or p.trocknung_tage %}
+  <tr><th scope="row">Bewertung</th><td>Geschmack {{ p.bew_geschmack or '–' }} · Wirkung {{ p.bew_wirkung or '–' }} · Aufwand {{ p.bew_aufwand or '–' }}{% if p.trocknung_tage %} · Trocknung {{ p.trocknung_tage }} Tage{% endif %}</td></tr>
+  {% endif %}
+  {% if p.ernte_notiz %}<tr><th scope="row">Ernte-Notiz</th><td>{{ p.ernte_notiz }}</td></tr>{% endif %}
+</table>
+
+<h2>Aufgaben</h2>
+{% if plant_tasks %}
+<ul class="tasks">
+  {% for t in plant_tasks %}
+  <li><span>{{ tr(t.title) }}<br><small class="muted num">fällig {{ t.due|dt }}</small></span>
+    <form class="inline-form" method="post" action="{{ root }}/aufgabe/{{ t.id }}/erledigt"><input type="hidden" name="back" value="/pflanze/{{ p.id }}"><button class="icon-btn" aria-label="Aufgabe erledigt">{{ icon('check') }}</button></form></li>
+  {% endfor %}
+</ul>
+{% else %}<p class="muted">Keine offenen Aufgaben. Vorschläge erscheinen automatisch, sobald sie fällig werden.</p>{% endif %}
+<details><summary>Eigene Aufgabe</summary>
+<form method="post" action="{{ root }}/pflanze/{{ p.id }}/aufgabe">
+  <label><span>Aufgabe <span class="req" aria-hidden="true">*</span></span><input name="title" required></label>
+  <label>Fällig am <input type="date" name="due"></label>
+  <button class="btn">Aufgabe anlegen</button>
+</form></details>
+
+<h2>Phasen</h2>
+<table>
+{% for ph in phases %}
+  <tr><td class="num">{{ ph.ab|dt }}</td><td><span class="chip ph-{{ ph.phase }}">{{ tr(ph.phase) }}</span></td>
+  <td><form class="inline-form" method="post" action="{{ root }}/pflanze/{{ p.id }}/phase/{{ ph.id }}/loeschen" onsubmit='return confirm({{ tr("Wirklich löschen?")|tojson }})'><button class="icon-btn danger-icon" aria-label="Phase löschen">{{ icon('trash') }}</button></form></td></tr>
+{% endfor %}
+</table>
+{% if not p.ausgezogen_am %}
+<form method="post" action="{{ root }}/pflanze/{{ p.id }}/phase">
+  <label>Neue Phase <select name="phase">{% for ph in all_phases %}<option value="{{ ph }}">{{ tr(ph) }}</option>{% endfor %}</select></label>
+  <label>Ab <input type="datetime-local" name="ab" value="{{ now }}"></label>
+  <button class="btn">Phase wechseln</button>
+</form>
+<details><summary>Ausziehen / Ernten</summary>
+<form method="post" action="{{ root }}/pflanze/{{ p.id }}/ausziehen">
+  <label>Zeit <input type="datetime-local" name="ts" value="{{ now }}"></label>
+  <label>Trockengewicht g (optional) <input name="trocken_g" inputmode="decimal"></label>
+  <label>Nassgewicht g (optional) <input name="nass_g" inputmode="decimal"></label>
+  <button class="btn">Ausziehen</button>
+</form></details>
+{% endif %}
+<details><summary>Erntegewicht eintragen / korrigieren</summary>
+<form method="post" action="{{ root }}/pflanze/{{ p.id }}/gewicht">
+  <label>Trockengewicht g <input name="trocken_g" inputmode="decimal" value="{{ '%g' % p.trocken_g if p.trocken_g else '' }}"></label>
+  <label>Nassgewicht g <input name="nass_g" inputmode="decimal" value="{{ '%g' % p.nass_g if p.nass_g else '' }}"></label>
+  <button class="btn">Speichern</button>
+</form></details>
+<details><summary>Bewertung und Trocknung</summary>
+<form method="post" action="{{ root }}/pflanze/{{ p.id }}/bewertung">
+  {% for field, label in (('geschmack', tr('Geschmack')), ('wirkung', tr('Wirkung')), ('aufwand', tr('Aufwand'))) %}
+  {% set cur = p['bew_' ~ field] %}
+  <label>{{ label }} (1 schlecht bis 5 sehr gut)
+    <select name="{{ field }}"><option value="">–</option>{% for n in (1,2,3,4,5) %}<option value="{{ n }}" {{ 'selected' if cur == n }}>{{ n }}</option>{% endfor %}</select>
+  </label>
+  {% endfor %}
+  <label>Trocknung in Tagen <input name="trocknung_tage" inputmode="numeric" value="{{ p.trocknung_tage if p.trocknung_tage is not none else '' }}"></label>
+  <label>Notiz zur Ernte <textarea name="ernte_notiz" rows="3">{{ p.ernte_notiz or '' }}</textarea></label>
+  <button class="btn">Speichern</button>
+</form></details>
+<details><summary>Stammdaten ändern</summary>
+<form method="post" action="{{ root }}/pflanze/{{ p.id }}/bearbeiten">
+  <label><span>Sorte <span class="req" aria-hidden="true">*</span></span><input name="sorte" required value="{{ p.sorte }}"></label>
+  <label>Hersteller <input name="hersteller" value="{{ p.hersteller }}"></label>
+  <label>Keimdatum <input type="date" name="keimdatum" value="{{ p.keimdatum or '' }}"></label>
+  <label>Typ <select name="typ"><option value="">–</option><option value="photo" {{ 'selected' if p.typ == 'photo' }}>Photoperiodisch</option><option value="auto" {{ 'selected' if p.typ == 'auto' }}>Autoflower</option></select></label>
+  <label>Topf <input name="topf" value="{{ p.topf }}"></label>
+  <label>Notiz <textarea name="notiz" rows="3">{{ p.notiz }}</textarea></label>
+  <label>Platz <select name="slot">{% for s in slots() %}<option value="{{ s }}" {{ 'selected' if s == p.slot }}>Platz {{ s }}</option>{% endfor %}</select></label>
+  <label>Eingesetzt am <input type="datetime-local" name="eingesetzt_am" value="{{ p.eingesetzt_am }}"></label>
+  <button class="btn">Speichern</button>
+</form></details>
+<form method="post" action="{{ root }}/pflanze/{{ p.id }}/loeschen" onsubmit='return confirm({{ tr("Pflanze mit allen Einträgen wirklich löschen?")|tojson }})'>
+  <button class="btn danger">Pflanze löschen</button>
+</form>
+
+{% if zelt_events %}
+<details><summary>Ereignisse im Zelt seit dem Einsetzen</summary>
+<ul class="journal">{% for e in zelt_events %}<li><time class="num">{{ e.ts|dt }}</time> {{ e.text }}</li>{% endfor %}</ul>
+</details>
+{% endif %}
+
+<h2>Einträge</h2>
+<table>
+{% for e in entries %}
+  <tr>
+    <td class="num">{{ e.ts|dt }}</td>
+    <td>{% if e.tag %}<span class="chip chip-typ">{{ tr(e.tag) }}</span> {% endif %}{% if e.kind == 'photo' %}<a href="{{ root }}/fotos/{{ e.text }}"><img class="thumb" src="{{ root }}/fotos/t_{{ e.text }}" width="120" height="90" loading="lazy" alt="Foto vom {{ e.ts|dt }}"></a>{% else %}{{ e.text }}{% endif %}</td>
+    <td><div class="row-actions">
+      <a class="icon-btn" href="{{ root }}/eintrag/{{ e.kind }}/{{ e.id }}?back=/pflanze/{{ p.id }}" aria-label="Eintrag bearbeiten">{{ icon('pencil') }}</a>
+      <form class="inline-form" method="post" action="{{ root }}/eintrag/{{ e.kind }}/{{ e.id }}/loeschen" onsubmit='return confirm({{ tr("Wirklich löschen?")|tojson }})'>
+        <input type="hidden" name="back" value="/pflanze/{{ p.id }}"><button class="icon-btn danger-icon" aria-label="Eintrag löschen">{{ icon('trash') }}</button>
+      </form>
+    </div></td>
+  </tr>
+{% else %}<tr><td>Noch keine Einträge.</td></tr>{% endfor %}
+</table>
+{% endblock %}

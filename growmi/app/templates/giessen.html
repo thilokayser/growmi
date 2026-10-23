@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}Gießen{% endblock %}
+{% block content %}
+<h1>{{ icon('droplet') }} Gießen</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" action="{{ root }}/giessen">
+  <label><span>Liter <span class="req" aria-hidden="true">*</span></span><input name="liters" inputmode="decimal" autofocus required value="{{ form.liters or '' }}"></label>
+  <label>Rezept
+    <select name="rezept">
+      {% if plan %}<option value="plan" {{ 'selected' if default_rezept == 'plan' }}>{{ plan.label }}</option>{% endif %}
+      {% for ph, items in recipes.items() %}
+      <option value="{{ ph }}" {{ 'selected' if ph == default_rezept }}>{{ tr(ph) }}{% if items %} ({% for i in items %}{{ i.produkt }} {{ '%g' % i.ml_per_l }} ml/L{{ ', ' if not loop.last }}{% endfor %}){% else %} (kein Rezept){% endif %}</option>
+      {% endfor %}
+      <option value="wasser" {{ 'selected' if default_rezept == 'wasser' }}>Nur Wasser</option>
+    </select>
+  </label>
+  <label>pH (optional) <input name="ph" inputmode="decimal" value="{{ form.ph or '' }}"></label>
+  <label>EC (optional) <input name="ec" inputmode="decimal" value="{{ form.ec or '' }}"></label>
+  <label>Zeit <input type="datetime-local" name="ts" value="{{ ts }}"></label>
+  <fieldset><legend>Pflanzen</legend>
+    {% for p in plants %}
+    <label class="check"><input type="checkbox" name="plant_ids" value="{{ p.id }}" {{ 'checked' if p.id in checked }}> Platz {{ p.slot }} · {{ p.sorte }}</label>
+    {% else %}<p>Kein Platz belegt.</p>{% endfor %}
+  </fieldset>
+  {% if others %}
+  <details><summary>Weitere Pflanzen (ausgezogen, für nachträgliche Einträge)</summary>
+    {% for p in others %}
+    <label class="check"><input type="checkbox" name="plant_ids" value="{{ p.id }}" {{ 'checked' if p.id in checked }}> Platz {{ p.slot }} · {{ p.sorte }} (ausgezogen)</label>
+    {% endfor %}
+  </details>
+  {% endif %}
+  <button class="btn">Speichern</button>
+</form>
+{% endblock %}

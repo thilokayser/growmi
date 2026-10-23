@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Klima-Heatmap{% endblock %}
+{% block content %}
+<h1>Klima-Heatmap</h1>
+{% if not d.days %}<p>Noch keine Stundenwerte. Sie entstehen stündlich aus dem HA-Verlauf (bis zu 10 Tage rückwirkend) und bleiben danach gespeichert.</p>
+{% else %}
+<p class="muted">Jede Zeile ein Tag, jede Spalte eine Stunde. Das VPD wird gegen das Band der jeweiligen Phase (Licht an) oder das Nachtband 0,5–0,9 kPa (Licht aus) bewertet.</p>
+<ul class="legend">
+  <li class="chip hm-key hm-low">zu feucht (VPD zu niedrig)</li><li class="chip hm-key hm-ok">im Band</li><li class="chip hm-key hm-high">zu trocken (VPD zu hoch)</li>
+</ul>
+{% if d.weak %}<ul class="alerts">{% for w in d.weak %}<li>{{ w }}</li>{% endfor %}</ul>{% else %}<p class="all-clear">Keine auffälligen Tageszeiten.</p>{% endif %}
+<div class="hm-wrap"><table class="heatmap">
+  <thead><tr><th scope="col"><span class="visually-hidden">Tag</span></th>{% for h in hours %}<th scope="col" class="hm-h">{{ h if h % 3 == 0 else '' }}<span class="visually-hidden">{{ h }} Uhr</span></th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for day in d.days %}
+  <tr><th scope="row">{{ day[8:10] }}.{{ day[5:7] }}.</th>
+    {% for h in hours %}{% set c = d.cells.get((day, h)) %}
+    {% if c %}<td class="hm {{ 'hm-low' if c.status < 0 else ('hm-high' if c.status > 0 else 'hm-ok') }}" title="{{ h }} Uhr: VPD {{ '%.2f' % c.vpd }}"><span class="visually-hidden">{{ tr('zu feucht') if c.status < 0 else (tr('zu trocken') if c.status > 0 else tr('im Band')) }}, VPD {{ '%.2f' % c.vpd }}</span></td>
+    {% else %}<td class="hm hm-none"><span class="visually-hidden">keine Daten</span></td>{% endif %}
+    {% endfor %}
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endblock %}

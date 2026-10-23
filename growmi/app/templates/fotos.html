@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Fotovergleich{% endblock %}
+{% block content %}
+<h1>Fotovergleich</h1>
+{% if not cols %}<p>Noch keine Fotos. Mach ein Foto über die Taste „Foto“ auf der Zeltseite.</p>
+{% else %}
+<p class="muted">Je Woche seit dem Keimdatum das erste Foto jeder Pflanze.</p>
+<div class="photo-grid" style="--cols: {{ cols|length }}">
+  <div class="pg-head" aria-hidden="true"></div>
+  {% for c in cols %}<div class="pg-head"><a href="{{ root }}/pflanze/{{ c.plant.id }}">Platz {{ c.plant.slot }} · {{ c.plant.sorte }}</a></div>{% endfor %}
+  {% for w in weeks %}
+  <div class="pg-week">Woche {{ w }}</div>
+  {% for c in cols %}<div class="pg-cell">{% if c.weeks.get(w) %}<a href="{{ root }}/fotos/{{ c.weeks[w] }}"><img src="{{ root }}/fotos/t_{{ c.weeks[w] }}" loading="lazy" width="160" height="120" alt="{{ c.plant.sorte }}, Woche {{ w }}"></a>{% else %}<span class="muted">–</span>{% endif %}</div>{% endfor %}
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

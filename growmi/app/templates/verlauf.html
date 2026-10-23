@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}Verlauf{% endblock %}
+{% block content %}
+<h1>Verlauf</h1>
+{% if not rows %}<p>Noch keine Pflanzen.</p>{% else %}
+<form method="get" action="{{ root }}/verlauf" class="range">
+  <label class="visually-hidden" for="von">Von</label><input id="von" type="date" name="von" value="{{ von }}">
+  <span>bis</span>
+  <label class="visually-hidden" for="bis">Bis</label><input id="bis" type="date" name="bis" value="{{ bis }}">
+  <button class="btn">Zeigen</button>
+  <a href="{{ root }}/verlauf?von={{ first }}&bis={{ today }}">Alles</a>
+</form>
+<ul class="legend">
+  <li class="chip ph-Keimling">Keimling</li><li class="chip ph-Wachstum">Wachstum</li>
+  <li class="chip ph-Blüte">Blüte</li><li class="chip ph-Trocknung">Trocknung</li>
+</ul>
+{% for r in rows %}
+<div class="tl-row">
+  <a href="{{ root }}/pflanze/{{ r.plant.id }}">Platz {{ r.plant.slot }} · {{ r.plant.sorte }}</a>
+  <div class="track" aria-hidden="true">
+    {% for b in r.bars %}<div class="bar ph-{{ b.phase }}" style="left:{{ b.left_pct }}%;width:{{ b.width_pct }}%"><span>{{ tr(b.phase) }}</span></div>{% endfor %}
+    {% for m in r.markers %}<span class="marker" style="left:{{ m.left_pct }}%" data-icon="{{ m.icon }}" title="{{ m.title }}">{{ icon(m.icon) }}{% if m.count > 1 %}<b>{{ m.count }}×</b>{% endif %}</span>{% endfor %}
+    {% if today_pct is not none and 0 <= today_pct <= 100 %}<div class="today" style="left:{{ today_pct }}%"></div>{% endif %}
+  </div>
+  <p class="tl-sum num">{{ r.summary }}</p>
+</div>
+{% endfor %}
+{% if charts %}
+<h2>Klima</h2>
+{% for ch in charts %}
+<figure class="chart">
+  <figcaption>{{ ch.title }}: {{ '%g' % ch.min }} bis {{ '%g' % ch.max }} {{ ch.unit }} ({{ ch.first|dt }} bis {{ ch.last|dt }})</figcaption>
+  <svg viewBox="0 -4 300 88" preserveAspectRatio="none" role="img" aria-label="{{ ch.title }}, {{ '%g' % ch.min }} bis {{ '%g' % ch.max }} {{ ch.unit }}"><polyline points="{{ ch.points }}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>
+</figure>
+{% endfor %}
+{% endif %}
+{% if zelt_events %}
+<h2>Ereignisse im Zelt</h2>
+<ul class="journal">{% for e in zelt_events %}<li><time class="num">{{ e.ts|dt }}</time> {{ e.text }}</li>{% endfor %}</ul>
+{% endif %}
+<p class="axis num"><span>{{ von|dt }}</span><span>{{ bis|dt }}</span></p>
+{% endif %}
+{% endblock %}

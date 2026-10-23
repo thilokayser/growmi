@@ -1,0 +1,81 @@
+blueprint:
+  name: Growmi – Airing burst
+  description: >-
+    Makes sure the tent gets fresh air when the VPD control keeps the exhaust off for a long time. At minute 30 of every
+    hour, but only if the exhaust has been off for the chosen time, it runs for a while and then switches off again,
+    unless the control wants it on by now. It also works with a dead climate sensor, because otherwise there would be no airing at all.
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    exhaust_switch:
+      name: Exhaust switch
+      selector:
+        entity:
+          domain: switch
+    temperature:
+      name: Temperature sensor
+      selector:
+        entity:
+          domain: sensor
+    vpd:
+      name: VPD sensor (kPa)
+      selector:
+        entity:
+          domain: sensor
+    vpd_target:
+      name: VPD target sensor (kPa)
+      selector:
+        entity:
+          domain: sensor
+    off_for:
+      name: Only if the exhaust has been off for
+      default:
+        minutes: 45
+      selector:
+        duration:
+    run_for:
+      name: Run for
+      default:
+        minutes: 10
+      selector:
+        duration:
+    heat_limit:
+      name: Heat limit (°C), keeps it on
+      default: 29
+      selector:
+        number:
+          min: 20
+          max: 40
+          unit_of_measurement: °C
+mode: single
+variables:
+  temp_entity: !input temperature
+  vpd_entity: !input vpd
+  target_entity: !input vpd_target
+  t_heat: !input heat_limit
+triggers:
+- trigger: time_pattern
+  minutes: "30"
+conditions:
+- condition: state
+  entity_id: !input exhaust_switch
+  state: "off"
+  for: !input off_for
+actions:
+- action: switch.turn_on
+  target:
+    entity_id: !input exhaust_switch
+- delay: !input run_for
+- choose:
+  - conditions:
+    - condition: template
+      value_template: >-
+        {{ (states(temp_entity) | float(-1)) > t_heat or
+           (states(vpd_entity) | float(99)) < (states(target_entity) | float(0)) }}
+    sequence: []
+  default:
+  - action: switch.turn_off
+    target:
+      entity_id: !input exhaust_switch

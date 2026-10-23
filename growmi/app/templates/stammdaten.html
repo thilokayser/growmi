@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}Stammdaten{% endblock %}
+{% block content %}
+<h1>Stammdaten</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<h2>Sorten</h2>
+<p class="muted">Gespeicherte Sorten stehen beim Einsetzen als Vorlage bereit. Neue Kombinationen kommen automatisch dazu.</p>
+<table>
+{% for s in strains %}
+  <tr>
+    <td>{{ s.sorte }}{% if s.typ %} <span class="chip chip-typ">{{ s.typ|typ }}</span>{% endif %}<br><span class="muted">{{ s.hersteller or '–' }}{% if s.notiz %} · {{ s.notiz }}{% endif %}</span></td>
+    <td class="num">{{ s.plant_count }} {{ tr('Pflanze') if s.plant_count == 1 else tr('Pflanzen') }}</td>
+    <td><div class="row-actions">
+      <a class="icon-btn" href="{{ root }}/stammdaten/sorte/{{ s.id }}" aria-label="Sorte bearbeiten">{{ icon('pencil') }}</a>
+      <form class="inline-form" method="post" action="{{ root }}/stammdaten/sorte/{{ s.id }}/loeschen" onsubmit='return confirm({{ tr("Vorlage wirklich löschen? Bereits eingesetzte Pflanzen bleiben unverändert.")|tojson }})'><button class="icon-btn danger-icon" aria-label="Sorte löschen">{{ icon('trash') }}</button></form>
+    </div></td>
+  </tr>
+{% else %}<tr><td>Noch keine Sorte gespeichert.</td></tr>{% endfor %}
+</table>
+<h3>Neue Sorte</h3>
+<form method="post" action="{{ root }}/stammdaten/sorte">
+  <label><span>Sorte <span class="req" aria-hidden="true">*</span></span><input name="sorte" required value="{{ strain_form.sorte or '' }}"></label>
+  <label>Hersteller / Seedbank <input name="hersteller" value="{{ strain_form.hersteller or '' }}"></label>
+  <label>Typ <select name="typ"><option value="">–</option><option value="photo" {{ 'selected' if strain_form.typ == 'photo' }}>Photoperiodisch</option><option value="auto" {{ 'selected' if strain_form.typ == 'auto' }}>Autoflower</option></select></label>
+  <label>Notiz (optional) <input name="notiz" value="{{ strain_form.notiz or '' }}"></label>
+  <button class="btn">Sorte speichern</button>
+</form>
+
+<h2>Dünger</h2>
+<table>
+{% for f in fert %}
+  <tr>
+    <td>{% if f.filename %}<a href="{{ root }}/fotos/{{ f.filename }}"><img class="fert-thumb" src="{{ root }}/fotos/t_{{ f.filename }}" width="56" height="56" loading="lazy" alt="Foto von {{ f.produkt }}"></a>{% endif %}</td>
+    <td>{{ f.produkt }}<br><span class="muted">{{ f.hersteller }}</span></td>
+    <td class="num">{% if f|npk %}NPK {{ f|npk }}{% endif %}{% set s = stocks[f.id] %}{% if s %}<br><span class="muted">Rest ca. {{ '%.0f' % s.rest_ml }} ml{% if s.gaenge is not none %} · {{ '%.1f' % s.gaenge }} Gießgänge{% endif %}</span>{% endif %}{% if f.preis_eur and f.flasche_ml %}<br><span class="muted">{{ '%g' % f.preis_eur }} € / {{ '%g' % f.flasche_ml }} ml</span>{% endif %}</td>
+    <td><div class="row-actions">
+      <a class="icon-btn" href="{{ root }}/stammdaten/duenger/{{ f.id }}" aria-label="Dünger bearbeiten">{{ icon('pencil') }}</a>
+      <form class="inline-form" method="post" action="{{ root }}/stammdaten/duenger/{{ f.id }}/loeschen" onsubmit='return confirm({{ tr("Wirklich löschen?")|tojson }})'><button class="icon-btn danger-icon" aria-label="Dünger löschen">{{ icon('trash') }}</button></form>
+    </div></td>
+  </tr>
+{% else %}<tr><td>Noch kein Dünger angelegt.</td></tr>{% endfor %}
+</table>
+<h3>Neuer Dünger</h3>
+<form method="post" action="{{ root }}/stammdaten/duenger" enctype="multipart/form-data">
+  <label><span>Produkt <span class="req" aria-hidden="true">*</span></span><input name="produkt" required value="{{ form.produkt or '' }}"></label>
+  <label>Hersteller <input name="hersteller" value="{{ form.hersteller or '' }}"></label>
+  <fieldset><legend>NPK in Prozent (optional)</legend>
+    <div class="npk-row">
+      <label>N <input name="n" inputmode="decimal" value="{{ form.n or '' }}"></label>
+      <label>P <input name="p" inputmode="decimal" value="{{ form.p or '' }}"></label>
+      <label>K <input name="k" inputmode="decimal" value="{{ form.k or '' }}"></label>
+    </div>
+  </fieldset>
+  <fieldset><legend>Preis (optional, für die Kostenrechnung)</legend>
+    <div class="npk-row">
+      <label>Flasche in € <input name="preis_eur" inputmode="decimal" value="{{ form.preis_eur or '' }}"></label>
+      <label>Inhalt in ml <input name="flasche_ml" inputmode="decimal" value="{{ form.flasche_ml or '' }}"></label>
+    </div>
+  </fieldset>
+  <label>Bild als Referenz (optional) <input type="file" name="datei" accept="image/*"></label>
+  <button class="btn">Dünger anlegen</button>
+</form>
+
+<h2>Rezepte pro Box-Phase</h2>
+{% for ph in phases %}
+<form method="post" action="{{ root }}/stammdaten/rezept/{{ ph }}">
+  <h3>{{ tr(ph) }}</h3>
+  {% for f in fert %}
+  <label>{{ f.produkt }} (ml pro Liter) <input name="ml_{{ f.id }}" inputmode="decimal" value="{{ recipes[ph].get(f.id, '') }}"></label>
+  {% endfor %}
+  <button class="btn">Rezept {{ tr(ph) }} speichern</button>
+</form>
+{% endfor %}
+<h2>Vorrat und Pläne</h2>
+<div class="actions"><a class="btn ghost" href="{{ root }}/einkauf">Einkaufsliste</a><a class="btn ghost" href="{{ root }}/stammdaten/wochenplan?phase=Blüte">Düngeplan nach Woche</a><a class="btn ghost" href="{{ root }}/verschleiss">Verschleiß-Zähler</a></div>
+
+<h2>QR-Etiketten</h2>
+<p class="muted">Pro Platz ein QR-Code: Scan öffnet die Schnellseite für Foto, Gießen und Notiz.</p>
+<div class="actions"><a class="btn" href="{{ root }}/qr">QR-Etiketten drucken</a><a class="btn ghost" href="{{ root }}/kiosk">Zelt-Anzeige (Kiosk)</a></div>
+
+<h2>Daten sichern</h2>
+<p class="muted">Vor jedem Löschen legt das Add-on automatisch eine Kopie der Datenbank an (die letzten 50).</p>
+<div class="actions">
+  <a class="btn" href="{{ root }}/export.json">Alles als JSON</a>
+  <a class="btn" href="{{ root }}/export.csv">Auswertung als CSV</a>
+</div>
+{% endblock %}

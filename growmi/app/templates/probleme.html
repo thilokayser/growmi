@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Probleme{% endblock %}
+{% block content %}
+<h1>Probleme</h1>
+<form method="get" action="{{ root }}/probleme" class="range">
+  <label class="visually-hidden" for="tag">Tag</label>
+  <select id="tag" name="tag"><option value="">Alle Tags</option>{% for t in tags %}<option value="{{ t }}" {{ 'selected' if t == tag }}>{{ tr(t) }}</option>{% endfor %}</select>
+  <button class="btn">Filtern</button>
+</form>
+{% if counts %}
+<h2>Häufigkeit pro Sorte</h2>
+<table>{% for c in counts %}<tr><td>{{ c.sorte }}</td><td><span class="chip chip-typ">{{ tr(c.tag) }}</span></td><td class="num">{{ c.n }}×</td></tr>{% endfor %}</table>
+{% endif %}
+<h2>Einträge</h2>
+{% if items %}
+<ul class="journal">
+  {% for i in items %}
+  <li><time class="num">{{ i.ts|dt }}</time> <b>Platz {{ i.slot }} · {{ i.sorte }}</b> <span class="chip chip-typ">{{ tr(i.tag) }}</span><br>{{ i.text }}
+    {% if i.photos %}<div class="photo-grid" style="--cols: {{ i.photos|length }}; margin-top:.5rem">{% for f in i.photos %}<div class="pg-cell"><a href="{{ root }}/fotos/{{ f }}"><img src="{{ root }}/fotos/t_{{ f }}" loading="lazy" width="160" height="120" alt="Foto zum Problem"></a></div>{% endfor %}</div>{% endif %}</li>
+  {% endfor %}
+</ul>
+{% else %}<p class="muted">Noch keine Probleme erfasst. Beim Notiz-Schreiben kannst du einen Problem-Tag wählen.</p>{% endif %}
+{% endblock %}

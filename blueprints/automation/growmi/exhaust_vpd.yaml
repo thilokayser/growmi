@@ -1,0 +1,135 @@
+blueprint:
+  name: Growmi – Exhaust by VPD
+  description: >-
+    Controls the exhaust (carbon filter) by VPD against a target with a dead band. Mode "Feuchteschutz" keeps the
+    exhaust on from the humidity limit and off again only below the lower humidity limit, "Standard" has no humidity
+    limit. Above the heat limit it always runs. It does nothing while a sensor has no valid value or the climate
+    sensor is offline. The mode helper must be an input_select with the options Feuchteschutz, Standard.
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    exhaust_switch:
+      name: Exhaust switch
+      selector:
+        entity:
+          domain: switch
+    light_switch:
+      name: Light switch (re-evaluates when the light changes)
+      selector:
+        entity:
+          domain: switch
+    vpd:
+      name: VPD sensor (kPa)
+      selector:
+        entity:
+          domain: sensor
+    vpd_target:
+      name: VPD target sensor (kPa, lower bound of the wanted band)
+      selector:
+        entity:
+          domain: sensor
+    temperature:
+      name: Temperature sensor
+      selector:
+        entity:
+          domain: sensor
+    humidity:
+      name: Humidity sensor
+      selector:
+        entity:
+          domain: sensor
+    sensor_online:
+      name: Climate sensor online (binary_sensor)
+      selector:
+        entity:
+          domain: binary_sensor
+    exhaust_mode:
+      name: Exhaust mode (input_select with Feuchteschutz, Standard)
+      selector:
+        entity:
+          domain: input_select
+    heat_limit:
+      name: Heat limit, exhaust always on above (°C)
+      default: 29
+      selector:
+        number:
+          min: 20
+          max: 40
+          unit_of_measurement: °C
+    humidity_on:
+      name: Humidity limit, exhaust on from (%)
+      default: 78
+      selector:
+        number:
+          min: 50
+          max: 100
+          unit_of_measurement: "%"
+    humidity_off:
+      name: Humidity lower limit, may switch off below (%)
+      default: 74
+      selector:
+        number:
+          min: 40
+          max: 100
+          unit_of_measurement: "%"
+    dead_band:
+      name: Dead band (kPa)
+      default: 0.25
+      selector:
+        number:
+          min: 0.05
+          max: 1
+          step: 0.05
+          unit_of_measurement: kPa
+mode: restart
+variables:
+  exhaust_entity: !input exhaust_switch
+  vpd_entity: !input vpd
+  target_entity: !input vpd_target
+  temp_entity: !input temperature
+  humidity_entity: !input humidity
+  mode_entity: !input exhaust_mode
+  t_heat: !input heat_limit
+  h_on: !input humidity_on
+  h_off: !input humidity_off
+  band: !input dead_band
+  exhaust_action: >-
+    {%- set v = states(vpd_entity) | float(-1) -%}
+    {%- set t = states(temp_entity) | float(-1) -%}
+    {%- set low = states(target_entity) | float(-1) -%}
+    {%- set h = states(humidity_entity) | float(-1) -%}
+    {%- set running = is_state(exhaust_entity, 'on') -%}
+    {%- set protect = not is_state(mode_entity, 'Standard') -%}
+    {%- if v < 0 or t < 0 or low < 0 -%}nothing
+    {%- elif t > t_heat -%}{{ 'nothing' if running else 'switch.turn_on' }}
+    {%- elif protect and h >= h_on -%}{{ 'nothing' if running else 'switch.turn_on' }}
+    {%- elif not running and v < low -%}switch.turn_on
+    {%- elif running and v > low + band and not (protect and h > h_off) -%}switch.turn_off
+    {%- else -%}nothing{%- endif -%}
+triggers:
+- trigger: state
+  entity_id:
+  - !input vpd
+  - !input temperature
+  - !input vpd_target
+  - !input light_switch
+  - !input humidity
+- trigger: state
+  entity_id: !input sensor_online
+  to: "on"
+- trigger: homeassistant
+  event: start
+- trigger: state
+  entity_id: !input exhaust_mode
+conditions:
+- condition: state
+  entity_id: !input sensor_online
+  state: "on"
+- condition: template
+  value_template: "{{ exhaust_action | trim != 'nothing' }}"
+actions:
+- action: "{{ exhaust_action | trim }}"
+  target:
+    entity_id: !input exhaust_switch

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}Foto{% endblock %}
+{% block content %}
+<h1>{{ icon('camera') }} Foto</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" action="{{ root }}/foto" enctype="multipart/form-data">
+  <label>Pflanze <select name="plant_id" required>{% for p in plants %}<option value="{{ p.id }}">Platz {{ p.slot }} · {{ p.sorte }}</option>{% endfor %}</select></label>
+  <label><span>Bild <span class="req" aria-hidden="true">*</span></span><input type="file" name="datei" accept="image/*" required></label>
+  <label>Zeit <input type="datetime-local" name="ts" value="{{ ts }}"></label>
+  <button class="btn">Hochladen</button>
+</form>
+{% endblock %}

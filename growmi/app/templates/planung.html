@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Belegungsplaner{% endblock %}
+{% block content %}
+<h1>Belegungsplaner</h1>
+<p class="muted">Geschätzte Ernte je Platz (Faustwerte: Blüte 9 Wochen, Autoflower 85 Tage) und wann der Nachfolger keimen sollte, damit er beim Freiwerden bereitsteht ({{ germ }} Tage Keimphase).</p>
+<div class="sorte-group"><table class="num"><tbody>
+  {% for r in rows %}
+  <tr class="plant">
+    <td data-label="Platz"><b>Platz {{ r.slot }}</b><br><span class="muted">{{ r.pos }}</span></td>
+    {% if r.plant %}
+    <td data-label="Pflanze">{{ r.plant.sorte }}<br>{% if r.phase %}<span class="chip ph-{{ r.phase }}">{{ tr(r.phase) }}</span>{% endif %}</td>
+    <td data-label="Ernte" class="num">{% if r.harvest %}Ernte ca. {{ r.harvest|dt }}<br><span class="muted">in {{ r.days_left }} Tagen</span>{% else %}<span class="muted">in Trocknung oder fertig</span>{% endif %}</td>
+    <td data-label="Nachfolger" class="num">{% if r.next_start %}Nachfolger keimen ab<br><b>{{ r.next_start|dt }}</b>{% endif %}</td>
+    {% else %}
+    <td colspan="3"><span class="muted">frei</span> · <a href="{{ root }}/pflanze/neu?slot={{ r.slot }}">jetzt einsetzen</a></td>
+    {% endif %}
+  </tr>
+  {% endfor %}
+</tbody></table></div>
+{% endblock %}

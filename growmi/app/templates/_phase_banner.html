@@ -1,0 +1,14 @@
+{% if phase_suggestion %}
+<aside class="banner" aria-label="Vorschlag">
+  <p><b>{{ phase_suggestion.names|join(', ') }}</b> {{ tr('ist') if phase_suggestion.names|length == 1 else tr('sind') }} in <b>{{ tr(phase_suggestion.target) }}</b>,
+  die Box steht noch auf {{ tr(phase_suggestion.box) }}. Das Ziel-VPD{% if phase_suggestion.target == 'Blüte' %} und das Licht{% endif %} folgen der Box-Phase.</p>
+  {% if phase_suggestion.target == 'Blüte' and phase_suggestion.auto_present %}<p class="muted">Im Zelt stehen auch Autoflower: 12/12 ist für sie nicht nötig und kann den Ertrag senken.</p>{% endif %}
+  <div class="actions">
+    {% if phase_suggestion.target == 'Blüte' %}
+    <form class="inline-form" method="post" action="{{ root }}/box/phase"><input type="hidden" name="phase" value="Blüte"><input type="hidden" name="licht" value="1"><input type="hidden" name="back" value="{{ back }}"><button class="btn">Box auf Blüte + Licht 12/12</button></form>
+    {% endif %}
+    <form class="inline-form" method="post" action="{{ root }}/box/phase"><input type="hidden" name="phase" value="{{ phase_suggestion.target }}"><input type="hidden" name="back" value="{{ back }}"><button class="btn {{ 'ghost' if phase_suggestion.target == 'Blüte' }}">Box auf {{ tr(phase_suggestion.target) }}{% if phase_suggestion.target == 'Blüte' %}, Licht lassen{% endif %}</button></form>
+    <form class="inline-form" method="post" action="{{ root }}/box/spaeter"><input type="hidden" name="back" value="{{ back }}"><button class="btn ghost">Nicht heute</button></form>
+  </div>
+</aside>
+{% endif %}

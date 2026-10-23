@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ s.sorte }} ändern{% endblock %}
+{% block content %}
+<h1>Sorte ändern</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" action="{{ root }}/stammdaten/sorte/{{ s.id }}/bearbeiten">
+  <label><span>Sorte <span class="req" aria-hidden="true">*</span></span><input name="sorte" required value="{{ s.sorte }}"></label>
+  <label>Hersteller / Seedbank <input name="hersteller" value="{{ s.hersteller }}"></label>
+  <label>Typ <select name="typ"><option value="">–</option><option value="photo" {{ 'selected' if s.typ == 'photo' }}>Photoperiodisch</option><option value="auto" {{ 'selected' if s.typ == 'auto' }}>Autoflower</option></select></label>
+  <label>Notiz (optional) <input name="notiz" value="{{ s.notiz }}"></label>
+  <button class="btn">Speichern</button>
+</form>
+<p class="muted">Bereits eingesetzte Pflanzen behalten ihren Namen. Geändert wird nur die Vorlage.</p>
+<p><a href="{{ root }}/stammdaten">Zurück zu den Stammdaten</a></p>
+{% endblock %}

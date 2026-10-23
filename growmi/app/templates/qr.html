@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}QR-Etiketten{% endblock %}
+{% block content %}
+<h1>QR-Etiketten</h1>
+<p class="muted">Drucken, ausschneiden und am Topf oder Zeltrahmen anbringen. Ein Scan öffnet die Schnellseite der Pflanze, die gerade auf dem Platz steht. Die Etiketten bleiben beim Pflanzenwechsel gültig. Beim ersten Scan meldest du dich einmal in Home Assistant an.</p>
+<div class="actions"><button class="btn" onclick="window.print()">Drucken</button></div>
+<div class="qr-sheet">
+  {% for l in labels %}
+  <figure class="qr-label">
+    <div class="qr-code" role="img" aria-label="QR-Code für Platz {{ l.slot }}">{{ l.svg|safe }}</div>
+    <figcaption><b>{{ slot_label(l.slot) }}</b><br><small>{{ l.url }}</small></figcaption>
+  </figure>
+  {% endfor %}
+</div>
+{% endblock %}

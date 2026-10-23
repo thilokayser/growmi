@@ -1,0 +1,53 @@
+blueprint:
+  name: Growmi – Light schedule
+  description: >-
+    Switches the grow light by two time helpers (on and off). Also runs when Home Assistant starts,
+    so the light is in the right state after a restart or a power cut instead of waiting for the next switching time.
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    light_switch:
+      name: Light switch
+      selector:
+        entity:
+          domain: switch
+    light_on:
+      name: Light on (input_datetime, time only)
+      selector:
+        entity:
+          domain: input_datetime
+    light_off:
+      name: Light off (input_datetime, time only)
+      selector:
+        entity:
+          domain: input_datetime
+mode: single
+variables:
+  on_entity: !input light_on
+  off_entity: !input light_off
+  light_action: >-
+    {%- set on_t = state_attr(on_entity, 'timestamp') | float(0) -%}
+    {%- set off_t = state_attr(off_entity, 'timestamp') | float(0) -%}
+    {%- set now_t = now().hour * 3600 + now().minute * 60 + now().second -%}
+    {%- if on_t < off_t -%}
+    {{ 'switch.turn_on' if on_t <= now_t and now_t < off_t else 'switch.turn_off' }}
+    {%- else -%}
+    {{ 'switch.turn_on' if now_t >= on_t or now_t < off_t else 'switch.turn_off' }}
+    {%- endif -%}
+triggers:
+- trigger: time
+  at: !input light_on
+- trigger: time
+  at: !input light_off
+- trigger: homeassistant
+  event: start
+conditions:
+- condition: template
+  value_template: >-
+    {{ state_attr(on_entity, 'timestamp') is not none and state_attr(off_entity, 'timestamp') is not none }}
+actions:
+- action: "{{ light_action }}"
+  target:
+    entity_id: !input light_switch

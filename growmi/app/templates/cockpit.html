@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}Cockpit{% endblock %}
+{% block content %}
+<h1>Cockpit</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+{% include "_phase_banner.html" %}
+<section aria-labelledby="alarme">
+  <h2 id="alarme">Alarme</h2>
+  {% if alerts %}
+  <ul class="alerts">{% for a in alerts %}<li>{{ a }}</li>{% endfor %}</ul>
+  {% else %}<p class="all-clear">Keine Alarme. Sensor {{ tr('online') if online == 'on' else '–' }}{% if battery %}, Batterie {{ battery }} %{% endif %}.</p>{% endif %}
+</section>
+
+{% if devices or has_fan or has_exhaust or has_battery %}<section aria-labelledby="geraete">
+  <h2 id="geraete">Geräte</h2>
+  <div class="tiles">
+    {% for d in devices %}
+    <div class="tile"><span class="tile-label">{{ d.name }}</span>
+      <span class="tile-value">{{ '–' if d.on is none else (tr('an') if d.on else tr('aus')) }}</span>
+      <span class="tile-status {{ '' if d.on else 'warn' }}"><i aria-hidden="true"></i>{{ tr('läuft') if d.on else (tr('steht') if d.on is not none else tr('unbekannt')) }}</span></div>
+    {% endfor %}
+    {% if has_battery %}<div class="tile"><span class="tile-label">Batterie</span><span class="tile-value num">{{ battery or '–' }}{% if battery %}<small> %</small>{% endif %}</span></div>{% endif %}
+  </div>
+  {% if has_fan %}<form method="post" action="{{ root }}/cockpit/ventilator" class="segmented" aria-label="Ventilator-Modus">
+    {% for m in modes %}<button class="seg {{ 'active' if mode == m }}" name="modus" value="{{ m }}" {{ 'aria-pressed=true' if mode == m else 'aria-pressed=false' }}>{{ tr(m) }}</button>{% endfor %}
+  </form>
+  <p class="muted">Ventilator-Modus. „Auto“ folgt der Zeitschaltung und der Hitzeregel.</p>{% endif %}
+  {% if has_exhaust %}<form method="post" action="{{ root }}/cockpit/abluft" class="segmented" aria-label="Abluft-Modus">
+    {% for m in exhaust_modes %}<button class="seg {{ 'active' if exhaust_mode == m }}" name="modus" value="{{ m }}" {{ 'aria-pressed=true' if exhaust_mode == m else 'aria-pressed=false' }}>{{ tr(m) }}</button>{% endfor %}
+  </form>
+  <p class="muted">Abluft-Modus. „Feuchteschutz“: Nachtziel 0,6 kPa und Abluft immer ab 78 % Luftfeuchte. „Standard“: Nachtziel 0,4 kPa, keine Feuchte-Grenze.</p>{% endif %}
+</section>{% endif %}
+
+{% if has_maintenance %}<section aria-labelledby="wartung">
+  <h2 id="wartung">Wartungsmodus</h2>
+  <form method="post" action="{{ root }}/cockpit/wartung" class="segmented">
+    {% if maintenance %}<button class="seg active" name="aktion" value="ende">Wartungsmodus aktiv · beenden</button>
+    {% else %}<button class="seg" name="aktion" value="start">Wartungsmodus 30 min starten</button>{% endif %}
+  </form>
+  <p class="muted">Pausiert Abluft, Ventilator und Alarme, wenn du im Zelt arbeitest. Danach läuft alles automatisch weiter.</p>
+</section>{% endif %}
+
+<section aria-labelledby="heute">
+  <h2 id="heute">Heute fällig</h2>
+  {% if tasks %}
+  <ul class="tasks">
+    {% for t in tasks %}
+    <li><span><b>Platz {{ t.slot }} · {{ t.sorte }}</b><br>{{ tr(t.title) }}{% if t.due < today_iso %} <small class="muted">(seit {{ t.due|dt }})</small>{% endif %}</span>
+      <span class="row-actions">
+        <form class="inline-form" method="post" action="{{ root }}/aufgabe/{{ t.id }}/erledigt"><input type="hidden" name="back" value="/cockpit"><button class="btn" aria-label="Aufgabe erledigt">{{ icon('check') }} Erledigt</button></form>
+        <form class="inline-form" method="post" action="{{ root }}/aufgabe/{{ t.id }}/spaeter"><input type="hidden" name="back" value="/cockpit"><button class="icon-btn" aria-label="Auf morgen verschieben">+1</button></form>
+      </span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="all-clear">Nichts fällig.</p>{% endif %}
+</section>
+
+{% if charts or kwh %}
+<section aria-labelledby="verlauf24">
+  <h2 id="verlauf24">Letzte 24 Stunden</h2>
+  {% for ch in charts %}
+  <figure class="chart">
+    <figcaption>{{ ch.title }}: {{ '%g' % ch.min }} bis {{ '%g' % ch.max }} {{ ch.unit }}</figcaption>
+    <svg viewBox="0 -4 300 88" preserveAspectRatio="none" role="img" aria-label="{{ ch.title }}, {{ '%g' % ch.min }} bis {{ '%g' % ch.max }} {{ ch.unit }}"><polyline points="{{ ch.points }}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>
+  </figure>
+  {% endfor %}
+  {% if kwh %}<p class="num">Strom heute: <b>{{ kwh }} kWh</b>{% if eur %} · ca. {{ eur }} €{% endif %}</p>{% endif %}
+</section>
+{% endif %}
+
+<section aria-labelledby="mehr">
+  <h2 id="mehr">Mehr</h2>
+  <div class="actions">
+    <a class="btn ghost" href="{{ root }}/heatmap">Klima-Heatmap</a>
+    <a class="btn ghost" href="{{ root }}/planung">Belegungsplaner</a>
+    <a class="btn ghost" href="{{ root }}/bericht">Wochenbericht</a>
+    <a class="btn ghost" href="{{ root }}/probleme">Probleme</a>
+    <a class="btn ghost" href="{{ root }}/einkauf">Einkaufsliste</a>
+    <a class="btn ghost" href="{{ root }}/verschleiss">Verschleiß</a>
+  </div>
+</section>
+
+{% if events %}
+<section aria-labelledby="ereignisse">
+  <h2 id="ereignisse">Letzte Ereignisse im Zelt</h2>
+  <ul class="journal">{% for e in events %}<li><time class="num">{{ e.ts|dt }}</time> {{ e.text }}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+{% endblock %}

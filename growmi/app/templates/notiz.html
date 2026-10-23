@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}Notiz{% endblock %}
+{% block content %}
+<h1>{{ icon('note') }} Notiz / Eingriff</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" action="{{ root }}/notiz">
+  <label>Pflanze <select name="plant_id" required>{% for p in plants %}<option value="{{ p.id }}">Platz {{ p.slot }} · {{ p.sorte }}</option>{% endfor %}</select></label>
+  <label>Art <select name="art">{% for a in arten %}<option value="{{ a }}">{{ tr(a) }}</option>{% endfor %}</select></label>
+  <label>Problem-Tag (optional) <select name="tag"><option value="">–</option>{% for t in tags %}<option value="{{ t }}">{{ tr(t) }}</option>{% endfor %}</select></label>
+  <label>Text <textarea name="text" rows="3"></textarea></label>
+  <label>Zeit <input type="datetime-local" name="ts" value="{{ ts }}"></label>
+  <button class="btn">Speichern</button>
+</form>
+{% endblock %}

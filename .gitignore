@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+# never commit credentials or your own tag files
+.ha_token
+stl/
+urls.json

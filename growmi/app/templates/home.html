@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}Zelt{% endblock %}
+{% block content %}
+<h1>Zelt</h1>
+{% include "_phase_banner.html" %}
+{% if live.has.values()|select|list %}<section class="tiles" aria-label="Aktuelle Werte">
+  {% if live.has.phase %}<div class="tile"><span class="tile-label">Box-Phase</span><span class="tile-value">{{ tr(live.phase) }}</span></div>{% endif %}
+  {% if live.has.temp %}<div class="tile"><span class="tile-label">Temperatur</span><span class="tile-value num">{{ live.temp or '–' }}{% if live.temp %}<small> °C</small>{% endif %}</span></div>{% endif %}
+  {% if live.has.rh %}<div class="tile"><span class="tile-label">Luftfeuchte</span><span class="tile-value num">{{ live.rh or '–' }}{% if live.rh %}<small> %</small>{% endif %}</span></div>{% endif %}
+  {% if live.has.vpd %}<div class="tile"><span class="tile-label">VPD</span><span class="tile-value num">{{ live.vpd or '–' }}{% if live.vpd %}<small> kPa</small>{% endif %}</span>
+    {% if live.vpd_status %}<span class="tile-status {{ live.vpd_status }}"><i aria-hidden="true"></i>{{ tr('im Ziel') if live.vpd_status == 'ok' else tr('außerhalb') }}</span>{% endif %}</div>{% endif %}
+</section>{% endif %}
+<div class="actions">
+  <a class="btn" href="{{ root }}/giessen">{{ icon('droplet') }} Gießen</a>
+  <a class="btn" href="{{ root }}/notiz">{{ icon('note') }} Notiz</a>
+  <a class="btn" href="{{ root }}/foto">{{ icon('camera') }} Foto</a>
+  <a class="btn ghost" href="{{ root }}/fotos">Fotovergleich</a>
+</div>
+<div class="tent" role="group" aria-label="Zelt von oben: hinten oben, vorne unten">
+  <p class="tent-edge">Hinten</p>
+  <div class="tent-grid">
+  {% for c in cards %}
+    {% if c.plant %}
+    <a class="slot full" data-slot="{{ c.slot }}" data-pos="{{ c.pos }}" style="grid-row:{{ c.row }};grid-column:{{ c.col }}" href="{{ root }}/pflanze/{{ c.plant.id }}">
+      <small class="slot-pos">{{ slot_label(c.slot) }}</small>
+      <span class="canopy-box" aria-hidden="true"><span class="canopy ph-{{ c.phase }}" style="--size:{{ '%g' % c.canopy }}%"></span></span>
+      <span class="sorte">{{ c.plant.sorte }}</span>
+      <span class="chip ph-{{ c.phase }}">{{ tr(c.phase) }}</span>{% if c.plant.typ %}<small>{{ c.plant.typ|typ }}</small>{% endif %}
+      <small class="num">Tag {{ c.phase_day }} in dieser Phase</small>
+      <small class="num">{{ c.water_ago }}</small>
+      <small class="num">Woche {{ c.week }} · {{ c.age_days }} Tage alt · {{ '%g' % c.water_l }} L</small>
+    </a>
+    {% else %}
+    <a class="slot free" data-slot="{{ c.slot }}" data-pos="{{ c.pos }}" style="grid-row:{{ c.row }};grid-column:{{ c.col }}" href="{{ root }}/pflanze/neu?slot={{ c.slot }}">
+      <small class="slot-pos">{{ slot_label(c.slot) }}</small>
+      <span class="canopy-box" aria-hidden="true"><span class="canopy-empty"></span></span>
+      <span>frei</span><small>+ Pflanze einsetzen</small>
+    </a>
+    {% endif %}
+  {% endfor %}
+  </div>
+  <p class="tent-edge">Vorne</p>
+</div>
+{% endblock %}

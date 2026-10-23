@@ -1,0 +1,125 @@
+# Example Home Assistant package for Growmi. Optional: Growmi works with whatever subset you assign under Settings.
+# Install: save as <config>/packages/growmi.yaml and enable packages once in configuration.yaml:
+#   homeassistant:
+#     packages: !include_dir_named packages
+# Then replace the three placeholder entities in the template section (search for "REPLACE") and restart.
+# The option names of the three input_selects are fixed identifiers that Growmi writes: do not translate them.
+
+input_select:
+  grow_phase:
+    name: Grow box phase
+    icon: mdi:sprout
+    options: [Keimling, Wachstum, Blüte]
+    initial: Keimling
+  grow_fan_mode:
+    name: Grow fan mode
+    icon: mdi:fan
+    options: [Auto, Dauer an, Dauer aus]
+    initial: Auto
+  grow_exhaust_mode:
+    name: Grow exhaust mode
+    icon: mdi:air-filter
+    options: [Feuchteschutz, Standard]
+    initial: Standard
+
+input_datetime:
+  grow_light_on:
+    name: Grow light on
+    has_date: false
+    has_time: true
+    initial: "06:00"
+  grow_light_off:
+    name: Grow light off
+    has_date: false
+    has_time: true
+    initial: "00:00"
+  grow_fan_on:
+    name: Grow fan on
+    has_date: false
+    has_time: true
+    initial: "06:00"
+  grow_fan_off:
+    name: Grow fan off
+    has_date: false
+    has_time: true
+    initial: "00:00"
+
+input_number:
+  grow_electricity_price:
+    name: Electricity price
+    min: 0
+    max: 2
+    step: 0.0001
+    unit_of_measurement: "€/kWh"
+    mode: box
+    initial: 0.30
+
+timer:
+  grow_maintenance:
+    name: Grow maintenance mode
+    duration: "00:30:00"
+
+template:
+  - sensor:
+      - name: Grow VPD
+        unique_id: grow_vpd
+        unit_of_measurement: kPa
+        state_class: measurement
+        # vapour pressure deficit from air temperature and humidity
+        state: >-
+          {% set t = states('sensor.REPLACE_tent_temperature') | float(0) %}
+          {% set h = states('sensor.REPLACE_tent_humidity') | float(0) %}
+          {% set svp = 0.61078 * e ** (17.27 * t / (t + 237.3)) %}
+          {{ (svp * (1 - h / 100)) | round(2) }}
+      - name: Grow VPD target
+        unique_id: grow_vpd_target
+        unit_of_measurement: kPa
+        state_class: measurement
+        # lower bound of the wanted VPD band: by phase while the light is on, a night value while it is off
+        state: >-
+          {% if is_state('switch.REPLACE_grow_light', 'off') %}
+          {{ 0.4 if is_state('input_select.grow_exhaust_mode', 'Standard') else 0.6 }}
+          {% elif is_state('input_select.grow_phase', 'Keimling') %}0.4
+          {% elif is_state('input_select.grow_phase', 'Wachstum') %}0.8
+          {% else %}1.2{% endif %}
+  - binary_sensor:
+      - name: Grow climate sensor online
+        unique_id: grow_climate_sensor_online
+        device_class: connectivity
+        # on while the temperature sensor reported within the last 30 minutes
+        state: >-
+          {{ states.sensor.REPLACE_tent_temperature is not none and
+             (now() - states.sensor.REPLACE_tent_temperature.last_reported).total_seconds() < 1800 }}
+
+script:
+  grow_light_preset:
+    alias: Grow light preset
+    description: Sets both light times at once. Growmi calls it (Settings, Phase link) when it switches the box to flowering.
+    fields:
+      an:
+        name: Light on
+        required: true
+        selector:
+          time:
+      aus:
+        name: Light off
+        required: true
+        selector:
+          time:
+    sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.grow_light_on
+        data:
+          time: "{{ an }}"
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.grow_light_off
+        data:
+          time: "{{ aus }}"
+      # let the light schedule automation correct the switch at once (replace with your automation's entity id)
+      - action: automation.trigger
+        target:
+          entity_id: automation.REPLACE_growmi_light_schedule
+        data:
+          skip_condition: false

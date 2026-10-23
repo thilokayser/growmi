@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}Einstellungen{% endblock %}
+{% macro entity_field(name, label, list, hint='') %}
+  <label>{{ tr(label) }}
+    <span class="field-row">
+      <input name="{{ name }}" value="{{ cfg[name] }}" list="dl-{{ list }}" autocomplete="off" placeholder="nicht gesetzt" data-entity>
+      <button type="button" class="btn ghost" data-test aria-label="{{ tr(label) }} {{ tr('testen') }}">Testen</button>
+      <output class="muted" aria-live="polite"></output>
+    </span>
+    {% if hint %}<small class="muted">{{ tr(hint) }}</small>{% endif %}
+  </label>
+{% endmacro %}
+{% block content %}
+<h1>Einstellungen</h1>
+{% if saved %}<p class="all-clear" role="status">Gespeichert.</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<p class="muted">Ordne hier deine Home-Assistant-Entities zu. Felder, die du leer lässt, bleiben ausgeblendet. „Testen“ zeigt den aktuellen Wert aus Home Assistant.</p>
+
+{% for name, items in lists.items() %}<datalist id="dl-{{ name }}">{% for i in items %}<option value="{{ i }}">{% endfor %}</datalist>{% endfor %}
+
+<form method="post" action="{{ root }}/einstellungen" id="settings">
+  <h2>Sprache</h2>
+  <label>Oberfläche
+    <select name="lang">
+      <option value="" {{ 'selected' if not cfg.lang }}>{{ tr('Automatisch (wie Home Assistant)') }}</option>
+      <option value="de" {{ 'selected' if cfg.lang == 'de' }}>Deutsch</option>
+      <option value="en" {{ 'selected' if cfg.lang == 'en' }}>English</option>
+    </select>
+    <small class="muted">{{ tr('Gilt für die ganze Installation. Bereits gespeicherte Ereignisse behalten die Sprache, in der sie entstanden sind.') }}</small></label>
+
+  <h2>Klima</h2>
+  {{ entity_field('temp', 'Temperatur', 'sensor') }}
+  {{ entity_field('rh', 'Luftfeuchte', 'sensor') }}
+  {{ entity_field('vpd', 'VPD', 'sensor') }}
+  {{ entity_field('online', 'Sensor online', 'binary', 'Binärsensor, der „on“ ist, solange der Klimasensor Werte liefert.') }}
+  {{ entity_field('battery', 'Batterie des Sensors', 'sensor') }}
+
+  <h2>Box-Phase und Licht</h2>
+  {{ entity_field('phase', 'Box-Phase', 'select', 'Auswahlliste mit Keimling, Wachstum und Blüte.') }}
+  {{ entity_field('light_on', 'Licht an (Uhrzeit-Helfer)', 'datetime') }}
+  {{ entity_field('light_off', 'Licht aus (Uhrzeit-Helfer)', 'datetime') }}
+
+  <h2>Phasen-Kopplung</h2>
+  <label class="check"><input type="checkbox" name="phase_link" {{ 'checked' if cfg.phase_link }}> Box-Phase vorschlagen, wenn Pflanzen weiter sind (stellt auf Wunsch die Box um)</label>
+  {{ entity_field('phase_script', 'Licht-Skript für Blüte', 'script', 'Skript, das „an“ und „aus“ als Uhrzeit bekommt. Ohne Skript wird nur die Phase umgestellt.') }}
+  <label>Licht an in der Blüte <input type="time" name="phase_light_on" value="{{ cfg.phase_light_on[:5] }}"></label>
+  <label>Licht aus in der Blüte <input type="time" name="phase_light_off" value="{{ cfg.phase_light_off[:5] }}"></label>
+
+  <h2>Ventilator, Abluft, Wartung</h2>
+  {{ entity_field('fan_mode', 'Ventilator-Modus', 'select', 'Auswahlliste mit Auto, Dauer an, Dauer aus.') }}
+  {{ entity_field('exhaust_mode', 'Abluft-Modus', 'select', 'Auswahlliste mit Feuchteschutz, Standard.') }}
+  {{ entity_field('maintenance', 'Wartungs-Timer', 'timer') }}
+
+  <h2>Strom und Meldungen</h2>
+  {{ entity_field('price', 'Strompreis (€/kWh)', 'sensor', 'Zahlen-Helfer. Leer: es gilt der Wert aus den Add-on-Optionen.') }}
+  {{ entity_field('energy', 'Energiezähler (kWh, aufsummierend)', 'sensor', 'Leer: es gilt der Wert aus den Add-on-Optionen.') }}
+  <label>Benachrichtigungsdienst
+    <input name="notify" value="{{ cfg.notify }}" placeholder="z. B. notify.mobile_app_telefon">
+    <small class="muted">Leer: es gilt der Wert aus den Add-on-Optionen.</small></label>
+
+  <h2>Geräte</h2>
+  <p class="muted">Schalter, deren Betriebsstunden und Zustand die App zeigt. Rolle „Licht“ ergänzt die Heatmap. Zeile leeren entfernt das Gerät.</p>
+  {% for d in cfg.devices %}
+  <fieldset class="device">
+    <input type="hidden" name="dev_key" value="{{ d.key }}">
+    <label>Name <input name="dev_name" value="{{ d.name }}"></label>
+    <label>Name auf der Verschleißseite <input name="dev_wear_name" value="{{ d.wear_name or '' }}"></label>
+    <label>Schalter <input name="dev_entity" value="{{ d.entity }}" list="dl-switch" data-entity autocomplete="off"><button type="button" class="btn ghost" data-test>Testen</button><output class="muted" aria-live="polite"></output></label>
+    <label>Rolle <select name="dev_role">{% for r in roles %}<option value="{{ r }}" {{ 'selected' if d.role == r }}>{{ r or '–' }}</option>{% endfor %}</select></label>
+    <label>Lebensdauer in Stunden <input name="dev_limit" inputmode="decimal" value="{{ d.wear_limit_h or '' }}"></label>
+  </fieldset>
+  {% endfor %}
+  {% for n in spare %}
+  <fieldset class="device">
+    <legend>Neues Gerät</legend>
+    <input type="hidden" name="dev_key" value="">
+    <label>Name <input name="dev_name"></label>
+    <label>Name auf der Verschleißseite <input name="dev_wear_name"></label>
+    <label>Schalter <input name="dev_entity" list="dl-switch" data-entity autocomplete="off"><button type="button" class="btn ghost" data-test>Testen</button><output class="muted" aria-live="polite"></output></label>
+    <label>Rolle <select name="dev_role">{% for r in roles %}<option value="{{ r }}">{{ r or '–' }}</option>{% endfor %}</select></label>
+    <label>Lebensdauer in Stunden <input name="dev_limit" inputmode="decimal"></label>
+  </fieldset>
+  {% endfor %}
+
+  <h2>Plätze</h2>
+  <label>Ein Name pro Zeile, 1 bis 8 Plätze. Der erste steht vorne links, dann nach rechts und nach hinten.
+    <textarea name="slots" rows="6">{{ slot_text }}</textarea></label>
+  <p class="muted">Pflanzen auf wegfallenden Plätzen verhindern das Speichern. Erst verschieben oder ausziehen.</p>
+
+  <button class="btn">Speichern</button>
+</form>
+<h2>Sicherung</h2>
+<p class="muted">Eine Kopie von Daten, Einstellungen und Fotos liegt jede Nacht im Ordner <code>/share/growmi</code>.</p>
+<p><a class="btn ghost" href="{{ root }}/export.json">Export als JSON</a> <a class="btn ghost" href="{{ root }}/wiederherstellen">Sicherung wiederherstellen</a></p>
+<script>
+  document.querySelectorAll("[data-test]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var wrap = btn.parentElement, input = wrap.querySelector("[data-entity]"), out = wrap.querySelector("output");
+      if (!input.value.trim()) { out.textContent = {{ tr("Nichts eingetragen.")|tojson }}; return; }
+      fetch("{{ root }}/einstellungen/test?entity=" + encodeURIComponent(input.value.trim()))
+        .then(function (r) { return r.json(); })
+        .then(function (j) { out.textContent = j.ok ? {{ tr("Wert:")|tojson }} + " " + j.state : {{ tr("Nicht gefunden oder ohne Wert.")|tojson }}; })
+        .catch(function () { out.textContent = {{ tr("Prüfung fehlgeschlagen.")|tojson }}; });
+    });
+  });
+</script>
+{% endblock %}

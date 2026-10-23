@@ -1,0 +1,36 @@
+configuration:
+  public_port:
+    name: QR page port
+    description: Port of the QR quick pages. Use the same number as host port under Network. The pages are off until you set that host port.
+  weather_entity:
+    name: Weather entity
+    description: Optional. Used for a heat hint the evening before a hot day. Empty means the first weather entity found.
+  weather_hot_c:
+    name: Heat hint from (°C)
+    description: Outside temperature tomorrow from which Growmi warns.
+  quiet_from:
+    name: Quiet hours from
+    description: No non-critical push messages between quiet from and quiet to (HH:MM).
+  quiet_to:
+    name: Quiet hours to
+    description: End of the quiet hours (HH:MM).
+  ha_url:
+    name: Home Assistant address
+    description: Used for the host name in QR links, for example http://homeassistant.local:8123. Empty uses the internal URL of Home Assistant.
+  backup_dir:
+    name: Backup folder
+    description: Folder for the nightly backup, data and photos. Lives in the Home Assistant share.
+  energy_entity:
+    name: Energy meter (fallback)
+    description: kWh sensor, total increasing. The Settings page wins if it has a value.
+  strompreis_eur_kwh:
+    name: Electricity price (fallback, €/kWh)
+    description: Used when no price helper is set on the Settings page.
+  notify_service:
+    name: Notification service (fallback)
+    description: For example notify.mobile_app_my_phone. The Settings page wins if it has a value.
+  water_reminder_days:
+    name: Water reminder after (days)
+    description: Fixed reminder until Growmi has learned your own watering rhythm.
+network:
+  8100/tcp: QR quick pages and kiosk display (LAN, secret address, optional)

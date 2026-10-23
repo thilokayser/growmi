@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Verschleiß{% endblock %}
+{% block content %}
+<h1>Verschleiß-Zähler</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<p class="muted">Betriebsstunden aus dem Schaltverlauf der Steckdosen. Gezählt wird ab dem Tag, an dem das Add-on mitläuft (höchstens 10 Tage zurück). Ab 90 % kommt wöchentlich eine Erinnerung.</p>
+<ul class="tasks">
+  {% for d in devices %}
+  <li><span><b>{{ d.name }}</b><br><span class="num">{{ '%.0f' % d.hours }} von {{ '%.0f' % d.limit }} h · {{ '%.0f' % d.pct }} %</span>
+      <span class="vbar" aria-hidden="true"><i style="width: {{ [d.pct, 100]|min }}%"></i></span>
+      {% if d.reset_day %}<small class="muted">getauscht am {{ d.reset_day|dt }}</small>{% endif %}</span>
+    <span class="row-actions">
+      <form class="inline-form" method="post" action="{{ root }}/verschleiss/{{ d.key }}/getauscht" onsubmit='return confirm({{ tr("Zähler auf 0 setzen?")|tojson }})'><button class="btn">Getauscht</button></form>
+    </span></li>
+  <li><form method="post" action="{{ root }}/verschleiss/{{ d.key }}/limit" class="range"><label>Lebensdauer in Stunden <input name="limit_h" inputmode="decimal" value="{{ '%.0f' % d.limit }}"></label><button class="btn ghost">Speichern</button></form></li>
+  {% endfor %}
+</ul>
+{% endblock %}

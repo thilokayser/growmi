@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Wochenbericht{% endblock %}
+{% block content %}
+<h1>Wochenbericht</h1>
+<p class="muted">Die letzten 7 Tage, ab {{ r.start|dt }}. Sonntags um 18 Uhr kommt dieser Bericht auch als Push.</p>
+<div class="tiles">
+  <div class="tile"><span class="tile-label">Gegossen</span><span class="tile-value num">{{ '%g' % r.liters }}<small> L</small></span></div>
+  <div class="tile"><span class="tile-label">Kosten</span><span class="tile-value num">{{ '%.2f' % r.cost }}<small> €</small></span></div>
+  <div class="tile"><span class="tile-label">VPD im Ziel</span><span class="tile-value num">{{ ('%.0f' % r.ok_pct) if r.ok_pct is not none else '–' }}{% if r.ok_pct is not none %}<small> %</small>{% endif %}</span></div>
+  <div class="tile"><span class="tile-label">Hitze-Ereignisse</span><span class="tile-value num">{{ r.hitze }}</span></div>
+</div>
+<p class="muted num">Dünger {{ '%.2f' % r.fert_eur }} € · Strom {{ '%.2f' % r.strom_eur }} € bei {{ '%.1f' % r.kwh }} kWh · {{ r.tasks_open }} offene Aufgaben</p>
+{% if r.photos %}
+<h2>Neueste Fotos</h2>
+<div class="photo-grid" style="--cols: {{ r.photos|length }}">
+  {% for p in r.photos %}<div class="pg-cell"><a href="{{ root }}/fotos/{{ p.filename }}"><img src="{{ root }}/fotos/t_{{ p.filename }}" loading="lazy" width="160" height="120" alt="{{ p.sorte }}"></a></div>{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

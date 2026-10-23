@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Düngeplan nach Woche{% endblock %}
+{% block content %}
+<h1>Düngeplan nach Woche</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<p class="muted">Pro Woche der Box-Phase die ml pro Liter je Dünger, oder „Nur Wasser“ (z. B. Spülen). Wochen ohne Eintrag nutzen das normale Rezept der Phase. Die Woche zählt ab dem letzten Wechsel der Box-Phase.</p>
+<form method="get" action="{{ root }}/stammdaten/wochenplan" class="range">
+  <label class="visually-hidden" for="phase">Phase</label>
+  <select id="phase" name="phase">{% for ph in phases %}<option value="{{ ph }}" {{ 'selected' if ph == phase }}>{{ tr(ph) }}</option>{% endfor %}</select>
+  <button class="btn ghost">Phase wählen</button>
+</form>
+<form method="post" action="{{ root }}/stammdaten/wochenplan/{{ phase }}">
+  <div class="sorte-group"><table class="num">
+    <thead><tr><th scope="col">Woche</th>{% for f in fert %}<th scope="col">{{ f.produkt }} ml/L</th>{% endfor %}<th scope="col">Nur Wasser</th></tr></thead>
+    <tbody>
+    {% for w in weeks %}
+    {% set p = plan[w] %}
+    <tr class="plant"><th scope="row" data-label="Woche">Woche {{ w }}</th>
+      {% for f in fert %}<td data-label="{{ f.produkt }}"><input name="ml_{{ w }}_{{ f.id }}" inputmode="decimal" aria-label="{{ f.produkt }} ml pro Liter in Woche {{ w }}" value="{% if p %}{% for i in p[0] if i.fertilizer_id == f.id %}{{ '%g' % i.ml_per_l }}{% endfor %}{% endif %}"></td>{% endfor %}
+      <td data-label="Nur Wasser"><input type="checkbox" name="wasser_{{ w }}" aria-label="Woche {{ w }} nur Wasser" {{ 'checked' if p and p[1] }}></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <button class="btn">Plan speichern</button>
+</form>
+{% endblock %}

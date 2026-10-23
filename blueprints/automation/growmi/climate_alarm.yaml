@@ -1,0 +1,94 @@
+blueprint:
+  name: Growmi – Climate alarm
+  description: >-
+    Sends a notification when the tent is too hot for a while, or the VPD stays too low or too high.
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    temperature:
+      name: Temperature sensor
+      selector:
+        entity:
+          domain: sensor
+    humidity:
+      name: Humidity sensor (for the message)
+      selector:
+        entity:
+          domain: sensor
+    vpd:
+      name: VPD sensor (kPa)
+      selector:
+        entity:
+          domain: sensor
+    notify_service:
+      name: Notification service
+      description: For example notify.mobile_app_my_phone
+      selector:
+        text:
+    hot_limit:
+      name: Too hot above (°C)
+      default: 30
+      selector:
+        number:
+          min: 20
+          max: 45
+          unit_of_measurement: °C
+    hot_for:
+      name: ... for
+      default:
+        minutes: 15
+      selector:
+        duration:
+    vpd_low:
+      name: VPD too low below (kPa)
+      default: 0.4
+      selector:
+        number:
+          min: 0.1
+          max: 1.5
+          step: 0.05
+          unit_of_measurement: kPa
+    vpd_high:
+      name: VPD too high above (kPa)
+      default: 1.8
+      selector:
+        number:
+          min: 0.8
+          max: 3
+          step: 0.05
+          unit_of_measurement: kPa
+    vpd_for:
+      name: ... for (VPD)
+      default:
+        minutes: 30
+      selector:
+        duration:
+mode: single
+variables:
+  service: !input notify_service
+  temp_entity: !input temperature
+  humidity_entity: !input humidity
+  vpd_entity: !input vpd
+triggers:
+- trigger: numeric_state
+  entity_id: !input temperature
+  above: !input hot_limit
+  for: !input hot_for
+- trigger: numeric_state
+  entity_id: !input vpd
+  below: !input vpd_low
+  for: !input vpd_for
+- trigger: numeric_state
+  entity_id: !input vpd
+  above: !input vpd_high
+  for: !input vpd_for
+actions:
+- action: "{{ service }}"
+  continue_on_error: true
+  data:
+    title: Growmi climate
+    message: >-
+      Temperature {{ states(temp_entity) }} °C, humidity {{ states(humidity_entity) }} %,
+      VPD {{ states(vpd_entity) }} kPa

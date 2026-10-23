@@ -1,0 +1,36 @@
+configuration:
+  public_port:
+    name: Port der QR-Seiten
+    description: Port der QR-Schnellseiten. Dieselbe Zahl wie der Host-Port unter Netzwerk eintragen. Die Seiten sind aus, bis dieser Host-Port gesetzt ist.
+  weather_entity:
+    name: Wetter-Entity
+    description: Optional. Für einen Hitzehinweis am Vorabend. Leer nimmt die erste gefundene Wetter-Entity.
+  weather_hot_c:
+    name: Hitzehinweis ab (°C)
+    description: Außentemperatur morgen, ab der Growmi warnt.
+  quiet_from:
+    name: Ruhezeit von
+    description: Keine unkritischen Push-Meldungen zwischen Ruhezeit von und bis (HH:MM).
+  quiet_to:
+    name: Ruhezeit bis
+    description: Ende der Ruhezeit (HH:MM).
+  ha_url:
+    name: Home-Assistant-Adresse
+    description: Wird für den Hostnamen in den QR-Links genutzt, zum Beispiel http://homeassistant.local:8123. Leer nimmt die interne URL von Home Assistant.
+  backup_dir:
+    name: Sicherungsordner
+    description: Ordner für die nächtliche Sicherung samt Daten und Fotos. Liegt im Share von Home Assistant.
+  energy_entity:
+    name: Energiezähler (Ersatzwert)
+    description: kWh-Sensor, aufsummierend. Die Einstellungsseite hat Vorrang, wenn sie einen Wert hat.
+  strompreis_eur_kwh:
+    name: Strompreis (Ersatzwert, €/kWh)
+    description: Wird genutzt, wenn auf der Einstellungsseite kein Preis-Helfer gesetzt ist.
+  notify_service:
+    name: Benachrichtigungsdienst (Ersatzwert)
+    description: Zum Beispiel notify.mobile_app_mein_handy. Die Einstellungsseite hat Vorrang, wenn sie einen Wert hat.
+  water_reminder_days:
+    name: Gießerinnerung nach (Tagen)
+    description: Feste Erinnerung, bis Growmi deinen eigenen Gießrhythmus gelernt hat.
+network:
+  8100/tcp: QR-Schnellseiten und Kiosk-Anzeige (LAN, geheime Adresse, optional)

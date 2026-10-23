@@ -1,0 +1,57 @@
+blueprint:
+  name: Growmi – Light alarm
+  description: >-
+    Sends a notification when the light switch is on but the connected power meter shows hardly any power
+    (lamp or driver defective, or a tripped breaker).
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    light_switch:
+      name: Light switch
+      selector:
+        entity:
+          domain: switch
+    power_sensor:
+      name: Power sensor of the light (W)
+      selector:
+        entity:
+          domain: sensor
+    min_watts:
+      name: Alarm below (W)
+      default: 40
+      selector:
+        number:
+          min: 1
+          max: 500
+          unit_of_measurement: W
+    low_for:
+      name: ... for
+      default:
+        minutes: 5
+      selector:
+        duration:
+    notify_service:
+      name: Notification service
+      description: For example notify.mobile_app_my_phone
+      selector:
+        text:
+mode: single
+trigger_variables:
+  switch_entity: !input light_switch
+  power_entity: !input power_sensor
+  watts: !input min_watts
+variables:
+  service: !input notify_service
+  power_entity: !input power_sensor
+triggers:
+- trigger: template
+  value_template: "{{ is_state(switch_entity, 'on') and (states(power_entity) | float(999)) < watts }}"
+  for: !input low_for
+actions:
+- action: "{{ service }}"
+  continue_on_error: true
+  data:
+    title: Growmi light
+    message: "The lamp is on but only draws {{ states(power_entity) }} W."

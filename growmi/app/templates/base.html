@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="{{ lang() }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>{% block title %}{% endblock %} · Growmi</title>
+  {% include "_theme_head.html" %}
+  <link rel="stylesheet" href="{{ root }}/static/style.css">
+</head>
+<body>
+  {% from "icons.html" import icon %}
+  <a class="skip" href="#main">Zum Inhalt springen</a>
+  <header class="appbar">
+    {% if public %}<span class="brand">{{ icon('sprout') }}<span>Growmi</span></span>{% else %}<a class="brand" href="{{ root }}/">{{ icon('sprout') }}<span>Growmi</span></a>{% endif %}
+    {% if public %}
+    <nav aria-label="Plätze">
+      {% for n in slots() %}<a href="{{ root }}/platz/{{ n }}"{% if active_slot == n %} aria-current="page"{% endif %}>{{ icon('sprout') }}<span>Platz {{ n }}</span></a>{% endfor %}
+      <a href="{{ root }}/kiosk">{{ icon('gauge') }}<span>Anzeige</span></a>
+    </nav>
+    {% else %}<nav aria-label="Hauptnavigation">
+      {% for key, label, path, ic in [("start", tr("Zelt"), "/", "tent"), ("cockpit", tr("Cockpit"), "/cockpit", "gauge"), ("verlauf", tr("Verlauf"), "/verlauf", "activity"), ("auswertung", tr("Auswertung"), "/auswertung", "chart"), ("stammdaten", tr("Stammdaten"), "/stammdaten", "database"), ("einstellungen", tr("Einstellungen"), "/einstellungen", "sliders")] %}
+      <a href="{{ root }}{{ path }}"{% if active == key %} aria-current="page"{% endif %}>{{ icon(ic) }}<span>{{ label }}</span></a>
+      {% endfor %}
+    </nav>{% endif %}
+    <button type="button" class="icon-btn theme-btn" data-theme-toggle aria-label="Darstellung wechseln">
+      <span data-mode="auto">{{ icon('monitor') }}</span><span data-mode="dark">{{ icon('moon') }}</span><span data-mode="light">{{ icon('sun') }}</span>
+    </button>
+  </header>
+  <main id="main">{% block content %}{% endblock %}</main>
+  <script>
+    (function () {
+      var b = document.querySelector("[data-theme-toggle]");
+      if (!b) return;
+      var order = [null, "dark", "light"], names = {{ {"auto": tr("Automatisch"), "dark": tr("Dunkel"), "light": tr("Hell")}|tojson }};
+      var tpl = {{ tr("Darstellung: {0}. Wechseln zu {1}")|tojson }};
+      function cur() { return document.documentElement.dataset.theme || null; }
+      function next() { return order[(order.indexOf(cur()) + 1) % 3]; }
+      function label() {
+        var text = tpl.replace("{0}", names[cur() || "auto"]).replace("{1}", names[next() || "auto"]);
+        b.setAttribute("aria-label", text); b.title = text;
+      }
+      b.addEventListener("click", function () {
+        var n = next();
+        if (n) document.documentElement.dataset.theme = n; else delete document.documentElement.dataset.theme;
+        try { n ? localStorage.setItem("growlog-theme", n) : localStorage.removeItem("growlog-theme"); } catch (e) {}
+        label();
+      });
+      label();
+    })();
+  </script>
+</body>
+</html>

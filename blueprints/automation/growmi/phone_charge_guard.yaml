@@ -1,0 +1,67 @@
+blueprint:
+  name: Growmi – Kiosk phone charge guard
+  description: >-
+    Keeps the battery of the phone that shows the tent display between a lower and an upper limit by switching its
+    smart plug. Below the lower limit the plug charges, from the upper limit it switches off, in between nothing
+    changes. If the level is unknown (app not started, phone offline) the plug stays on so the display does not run empty.
+    The phone needs the Home Assistant companion app with the battery level sensor enabled.
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    battery_sensor:
+      name: Phone battery level sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: battery
+    plug_switch:
+      name: Smart plug of the phone charger
+      selector:
+        entity:
+          domain: switch
+    low_percent:
+      name: Charge below (%)
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 60
+          unit_of_measurement: "%"
+    high_percent:
+      name: Stop charging from (%)
+      default: 80
+      selector:
+        number:
+          min: 50
+          max: 100
+          unit_of_measurement: "%"
+mode: single
+variables:
+  battery_entity: !input battery_sensor
+  low: !input low_percent
+  high: !input high_percent
+triggers:
+- trigger: state
+  entity_id: !input battery_sensor
+- trigger: time_pattern
+  minutes: /10
+- trigger: homeassistant
+  event: start
+actions:
+- choose:
+  - conditions:
+    - condition: template
+      value_template: "{{ states(battery_entity) | float(-1) >= high }}"
+    sequence:
+    - action: switch.turn_off
+      target:
+        entity_id: !input plug_switch
+  - conditions:
+    - condition: template
+      value_template: "{{ states(battery_entity) | float(-1) < low }}"
+    sequence:
+    - action: switch.turn_on
+      target:
+        entity_id: !input plug_switch

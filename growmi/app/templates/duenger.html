@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ f.produkt }} ändern{% endblock %}
+{% block content %}
+<h1>Dünger ändern</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" action="{{ root }}/stammdaten/duenger/{{ f.id }}/bearbeiten" enctype="multipart/form-data">
+  <label><span>Produkt <span class="req" aria-hidden="true">*</span></span><input name="produkt" required value="{{ f.produkt }}"></label>
+  <label>Hersteller <input name="hersteller" value="{{ f.hersteller }}"></label>
+  <fieldset><legend>NPK in Prozent (optional)</legend>
+    <div class="npk-row">
+      <label>N <input name="n" inputmode="decimal" value="{{ '%g' % f.n if f.n is not none else '' }}"></label>
+      <label>P <input name="p" inputmode="decimal" value="{{ '%g' % f.p if f.p is not none else '' }}"></label>
+      <label>K <input name="k" inputmode="decimal" value="{{ '%g' % f.k if f.k is not none else '' }}"></label>
+    </div>
+  </fieldset>
+  <fieldset><legend>Preis (optional, für die Kostenrechnung)</legend>
+    <div class="npk-row">
+      <label>Flasche in € <input name="preis_eur" inputmode="decimal" value="{{ '%g' % f.preis_eur if f.preis_eur else '' }}"></label>
+      <label>Inhalt in ml <input name="flasche_ml" inputmode="decimal" value="{{ '%g' % f.flasche_ml if f.flasche_ml else '' }}"></label>
+    </div>
+  </fieldset>
+  <label>Aktueller Bestand in ml (optional, setzt den Vorrat neu) <input name="bestand_ml" inputmode="decimal"></label>
+  <p class="muted">Ein geänderter Preis gilt erst für künftiges Gießen, alte Einträge behalten den damaligen Preis.</p>
+  {% if f.filename %}
+  <img class="thumb" src="{{ root }}/fotos/t_{{ f.filename }}" width="120" height="90" alt="Aktuelles Foto von {{ f.produkt }}">
+  <label class="check"><input type="checkbox" name="remove_bild" value="1"> Bild entfernen</label>
+  {% endif %}
+  <label>{{ tr('Bild ersetzen') if f.filename else tr('Bild als Referenz (optional)') }} <input type="file" name="datei" accept="image/*"></label>
+  <button class="btn">Speichern</button>
+</form>
+<p><a href="{{ root }}/stammdaten">Zurück zu den Stammdaten</a></p>
+{% endblock %}

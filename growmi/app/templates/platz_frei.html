@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Platz {{ slot }} frei{% endblock %}
+{% block content %}
+<h1>Platz {{ slot }} ist frei</h1>
+<p class="muted">{{ pos }}. Hier steht gerade keine Pflanze. Setze sie im Growmi in Home Assistant ein, dann zeigt dieser Code die Schnellseite der Pflanze.</p>
+{% endblock %}

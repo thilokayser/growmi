@@ -1,0 +1,91 @@
+blueprint:
+  name: Growmi – Climate sensor alarm
+  description: >-
+    Reports a missing, silent or low-battery climate sensor. It checks every 30 minutes, because an existing
+    fault creates no further state change and a template trigger would never fire again. At most one message per repeat interval.
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    temperature:
+      name: Temperature sensor (its last report time is checked)
+      selector:
+        entity:
+          domain: sensor
+    sensor_online:
+      name: Climate sensor online (binary_sensor)
+      selector:
+        entity:
+          domain: binary_sensor
+    battery:
+      name: Battery sensor (%)
+      selector:
+        entity:
+          domain: sensor
+    battery_limit:
+      name: Battery alarm below (%)
+      default: 15
+      selector:
+        number:
+          min: 1
+          max: 50
+          unit_of_measurement: "%"
+    silent_minutes:
+      name: Alarm when silent for (minutes)
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 600
+          unit_of_measurement: min
+    repeat_hours:
+      name: At most one message every (hours)
+      default: 12
+      selector:
+        number:
+          min: 1
+          max: 72
+          unit_of_measurement: h
+    notify_service:
+      name: Notification service
+      description: For example notify.mobile_app_my_phone
+      selector:
+        text:
+mode: single
+variables:
+  service: !input notify_service
+  temp_entity: !input temperature
+  battery_entity: !input battery
+  battery_min: !input battery_limit
+  silent_s: !input silent_minutes
+  repeat_s: !input repeat_hours
+  problem: >-
+    {%- set s = states[temp_entity] -%}
+    {%- if s is none -%}Sensor no longer exists
+    {%- elif s.state in ['unavailable', 'unknown'] -%}Sensor unreachable
+    {%- elif (now() - s.last_reported).total_seconds() > silent_s * 60 -%}No new data for {{ ((now() - s.last_reported).total_seconds() / 3600) | round(1) }} h
+    {%- elif (states(battery_entity) | float(100)) < battery_min -%}Battery at {{ states(battery_entity) }} %
+    {%- endif -%}
+triggers:
+- trigger: time_pattern
+  minutes: /30
+- trigger: state
+  entity_id: !input sensor_online
+  to: "off"
+- trigger: numeric_state
+  entity_id: !input battery
+  below: !input battery_limit
+conditions:
+- condition: template
+  value_template: "{{ problem | trim != '' }}"
+- condition: template
+  value_template: >-
+    {{ this.attributes.last_triggered is none or
+       (now() - this.attributes.last_triggered).total_seconds() > repeat_s * 3600 }}
+actions:
+- action: "{{ service }}"
+  continue_on_error: true
+  data:
+    title: Growmi sensor
+    message: "{{ problem | trim }}. Climate control stays locked until data arrives again."

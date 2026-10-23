@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Einkaufsliste{% endblock %}
+{% block content %}
+<h1>Einkaufsliste</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<p class="muted">Dünger, bei dem der Vorrat noch für weniger als 2 Gießgänge reicht. Der Vorrat zählt ab dem letzten Bestand, den du beim Dünger eingetragen hast.</p>
+{% if items %}
+<table>
+  {% for s in items %}
+  <tr><td><b>{{ s.produkt }}</b><br><span class="muted">{{ s.hersteller }}</span></td>
+    <td class="num">Rest ca. {{ '%.0f' % s.rest_ml }} ml{% if s.gaenge is not none %}<br><span class="muted">{{ '%.1f' % s.gaenge }} Gießgänge</span>{% endif %}</td>
+    <td class="num">{% if s.preis %}{{ '%g' % s.preis }} €{% if s.flasche_ml %}<br><span class="muted">{{ '%g' % s.flasche_ml }} ml</span>{% endif %}{% else %}–{% endif %}</td>
+    <td><form class="inline-form" method="post" action="{{ root }}/stammdaten/duenger/{{ s.id }}/flasche"><button class="btn">Neue Flasche gekauft</button></form></td></tr>
+  {% endfor %}
+</table>
+{% else %}<p class="all-clear">Nichts nachzukaufen.</p>{% endif %}
+{% endblock %}

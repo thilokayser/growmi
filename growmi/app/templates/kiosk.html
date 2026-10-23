@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="{{ lang() }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta http-equiv="refresh" content="30">
+  <title>Zelt-Anzeige · Growmi</title>
+  {% include "_theme_head.html" %}
+  <link rel="stylesheet" href="{{ root }}/static/style.css">
+</head>
+<body class="kiosk">
+  <main>
+    <header class="kiosk-head"><h1>{{ tr(live.phase) }}</h1><span class="num kiosk-clock">{{ now }}</span></header>
+    <section class="tiles kiosk-tiles" aria-label="Aktuelle Werte">
+      {% if live.has.temp %}<div class="tile"><span class="tile-label">Temperatur</span><span class="tile-value num">{{ live.temp or '–' }}{% if live.temp %}<small> °C</small>{% endif %}</span></div>{% endif %}
+      {% if live.has.rh %}<div class="tile"><span class="tile-label">Luftfeuchte</span><span class="tile-value num">{{ live.rh or '–' }}{% if live.rh %}<small> %</small>{% endif %}</span></div>{% endif %}
+      {% if live.has.vpd %}<div class="tile"><span class="tile-label">VPD</span><span class="tile-value num">{{ live.vpd or '–' }}{% if live.vpd %}<small> kPa</small>{% endif %}</span>
+        {% if live.vpd_status %}<span class="tile-status {{ live.vpd_status }}"><i aria-hidden="true"></i>{{ tr('im Ziel') if live.vpd_status == 'ok' else tr('außerhalb') }}</span>{% endif %}</div>{% endif %}
+      {% for d in devices %}<div class="tile"><span class="tile-label">{{ d.name }}</span><span class="tile-value">{{ '–' if d.on is none else (tr('an') if d.on else tr('aus')) }}</span></div>{% endfor %}
+    </section>
+    {% if alerts %}<ul class="alerts">{% for a in alerts %}<li>{{ a }}</li>{% endfor %}</ul>{% else %}<p class="all-clear">Keine Alarme</p>{% endif %}
+    {% if tasks %}<h2>Heute fällig</h2><ul class="tasks">{% for t in tasks %}<li><span><b>Platz {{ t.slot }} · {{ t.sorte }}</b><br>{{ tr(t.title) }}</span></li>{% endfor %}</ul>{% endif %}
+    {% if events %}<p class="muted">Zuletzt: {{ events[0].text }} ({{ events[0].ts|dt }})</p>{% endif %}
+  </main>
+</body>
+</html>

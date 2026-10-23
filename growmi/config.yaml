@@ -1,0 +1,47 @@
+name: Growmi
+version: "0.21.0"
+slug: growmi
+url: https://github.com/thilokayser/growmi
+description: Track. Grow. Harvest. Tagebuch, Verlauf und Auswertung für dein Zelt
+arch:
+  - amd64
+  - aarch64
+homeassistant: 2024.10.0
+startup: application
+boot: auto
+init: false
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:sprout
+panel_title: Growmi
+homeassistant_api: true
+ports:
+  8100/tcp: null  # off until you map a host port under Network
+ports_description:
+  8100/tcp: Access for the QR tags (quick pages only, the address contains a secret)
+map:
+  - share:rw
+options:
+  public_port: 8100
+  weather_entity: ''
+  weather_hot_c: 30
+  quiet_from: '22:00'
+  quiet_to: '07:00'
+  ha_url: ''
+  backup_dir: /share/growmi
+  energy_entity: ''
+  strompreis_eur_kwh: 0.0
+  notify_service: ''
+  water_reminder_days: 4
+schema:
+  public_port: int?
+  weather_entity: str?
+  weather_hot_c: int?
+  quiet_from: str?
+  quiet_to: str?
+  ha_url: str?
+  backup_dir: str?
+  energy_entity: str?
+  strompreis_eur_kwh: float
+  notify_service: str?
+  water_reminder_days: int

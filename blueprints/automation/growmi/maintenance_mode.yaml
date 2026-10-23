@@ -1,0 +1,106 @@
+blueprint:
+  name: Growmi – Maintenance mode
+  description: >-
+    While a timer runs (start it from the Growmi cockpit or anywhere else) the listed switches are turned off and the
+    listed automations are paused, so you can work in the tent. When the timer finishes or is cancelled, the
+    automations are turned on again and the listed ones are triggered once so the exhaust and fan are in the right
+    state at once. After a Home Assistant restart without a running timer all listed automations are turned on, to be safe.
+    Do not list this automation itself.
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    maintenance_timer:
+      name: Maintenance timer
+      selector:
+        entity:
+          domain: timer
+    switches_off:
+      name: Switches to turn off during maintenance (exhaust, fan)
+      default: []
+      selector:
+        entity:
+          domain: switch
+          multiple: true
+    automations_paused:
+      name: Automations to pause during maintenance
+      default: []
+      selector:
+        entity:
+          domain: automation
+          multiple: true
+    automations_retriggered:
+      name: Automations to run once afterwards
+      default: []
+      selector:
+        entity:
+          domain: automation
+          multiple: true
+mode: restart
+variables:
+  timer_entity: !input maintenance_timer
+  off_list: !input switches_off
+  paused_list: !input automations_paused
+  retrigger_list: !input automations_retriggered
+triggers:
+- trigger: event
+  event_type: timer.started
+  event_data:
+    entity_id: !input maintenance_timer
+  id: start
+- trigger: event
+  event_type: timer.finished
+  event_data:
+    entity_id: !input maintenance_timer
+  id: end
+- trigger: event
+  event_type: timer.cancelled
+  event_data:
+    entity_id: !input maintenance_timer
+  id: end
+- trigger: homeassistant
+  event: start
+  id: restart
+actions:
+- choose:
+  - conditions:
+    - condition: trigger
+      id: start
+    sequence:
+    - if: "{{ off_list | length > 0 }}"
+      then:
+      - action: switch.turn_off
+        target:
+          entity_id: !input switches_off
+    - if: "{{ paused_list | length > 0 }}"
+      then:
+      - action: automation.turn_off
+        data:
+          stop_actions: true
+        target:
+          entity_id: !input automations_paused
+  - conditions:
+    - condition: or
+      conditions:
+      - condition: trigger
+        id: end
+      - condition: and
+        conditions:
+        - condition: trigger
+          id: restart
+        - condition: template
+          value_template: "{{ not is_state(timer_entity, 'active') }}"
+    sequence:
+    - if: "{{ paused_list | length > 0 }}"
+      then:
+      - action: automation.turn_on
+        target:
+          entity_id: !input automations_paused
+    - if: "{{ retrigger_list | length > 0 }}"
+      then:
+      - action: automation.trigger
+        data:
+          skip_condition: false
+        target:
+          entity_id: !input automations_retriggered

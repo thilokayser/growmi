@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ p.sorte }} · Schnell{% endblock %}
+{% block content %}
+<h1>{{ p.sorte }} <span class="chip ph-{{ phase }}">{{ tr(phase) }}</span></h1>
+<p class="muted">Platz {{ p.slot }}{% if not public %} · <a href="{{ root }}/pflanze/{{ p.id }}">alle Details</a>{% endif %}</p>
+{% if ok %}<p class="all-clear" role="status">Gespeichert.</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+<section class="quick" aria-labelledby="q-foto">
+  <h2 id="q-foto">Foto</h2>
+  <form method="post" action="{{ root }}/foto" enctype="multipart/form-data">
+    <input type="hidden" name="plant_id" value="{{ p.id }}">
+    <input type="hidden" name="back" value="/pflanze/{{ p.id }}/schnell?ok=foto">
+    <label class="btn big">{{ icon('camera') }} Foto aufnehmen
+      <input class="visually-hidden" type="file" name="datei" accept="image/*" capture="environment" required onchange="this.form.submit()">
+    </label>
+  </form>
+</section>
+
+<section class="quick" aria-labelledby="q-giessen">
+  <h2 id="q-giessen">Gießen</h2>
+  <form method="post" action="{{ root }}/pflanze/{{ p.id }}/schnell/giessen">
+    <label><span>Liter <span class="req" aria-hidden="true">*</span></span><input name="liters" inputmode="decimal" required value="{{ liters }}"></label>
+    <label>Rezept
+      <select name="rezept">
+        {% if plan %}<option value="plan" {{ 'selected' if rezept == 'plan' }}>{{ plan.label }}</option>{% endif %}
+        {% for ph, items in recipes.items() %}<option value="{{ ph }}" {{ 'selected' if ph == rezept }}>{{ tr(ph) }}{% if items %} ({% for i in items %}{{ i.produkt }} {{ '%g' % i.ml_per_l }} ml/L{{ ', ' if not loop.last }}{% endfor %}){% else %} (kein Rezept){% endif %}</option>{% endfor %}
+        <option value="wasser" {{ 'selected' if rezept == 'wasser' }}>Nur Wasser</option>
+      </select>
+    </label>
+    <fieldset><legend>Gegossen wurde</legend>
+      <label class="check"><input type="radio" name="scope" value="all" checked> Alle Pflanzen im Zelt{% if others > 0 %} ({{ others + 1 }}){% endif %}</label>
+      <label class="check"><input type="radio" name="scope" value="only"> Nur diese Pflanze</label>
+    </fieldset>
+    <button class="btn big">{{ icon('droplet') }} Gießen eintragen</button>
+  </form>
+</section>
+
+<section class="quick" aria-labelledby="q-notiz">
+  <h2 id="q-notiz">Notiz</h2>
+  <form method="post" action="{{ root }}/pflanze/{{ p.id }}/notiz">
+    <input type="hidden" name="back" value="/pflanze/{{ p.id }}/schnell?ok=notiz">
+    <label>Was ist aufgefallen? <textarea name="text" rows="3" required></textarea></label>
+    <label>Problem-Tag (optional) <select name="tag"><option value="">–</option>{% for t in tags %}<option value="{{ t }}">{{ tr(t) }}</option>{% endfor %}</select></label>
+    <button class="btn">{{ icon('note') }} Notiz speichern</button>
+  </form>
+</section>
+
+{% if due %}
+<section class="quick" aria-labelledby="q-aufgaben">
+  <h2 id="q-aufgaben">Fällige Aufgaben</h2>
+  <ul class="tasks">
+    {% for t in due %}<li><span>{{ tr(t.title) }}</span>
+      <form class="inline-form" method="post" action="{{ root }}/aufgabe/{{ t.id }}/erledigt"><input type="hidden" name="back" value="/pflanze/{{ p.id }}/schnell?ok=aufgabe"><button class="btn" aria-label="Aufgabe erledigt">{{ icon('check') }} Erledigt</button></form></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

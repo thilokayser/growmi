@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Wiederherstellen{% endblock %}
+{% block content %}
+<h1>Sicherung wiederherstellen</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{% if done %}
+<p class="all-clear" role="status">Wiederhergestellt{% if photos %}, {{ photos }} Fotodateien zurückkopiert{% endif %}. Vor dem Einspielen wurde ein Snapshot „vor-restore“ angelegt.{% if secret %} <b>Starte das Add-on neu</b>, damit die QR-Tags mit dem wiederhergestellten Schlüssel wieder funktionieren.{% endif %}</p>
+{% endif %}
+
+{% if rows %}
+<h2>Das wird ersetzt</h2>
+<p class="muted">Alle aktuellen Daten werden durch die Sicherung ersetzt. Die Einstellungen kommen aus der Sicherung, falls sie dort enthalten sind.</p>
+<table>
+  <tr><th>Tabelle</th><th class="num">In der Sicherung</th><th class="num">Jetzt hier</th></tr>
+  {% for r in rows %}<tr><td>{{ r.table }}</td><td class="num">{{ r.file }}</td><td class="num">{{ r.now }}</td></tr>{% endfor %}
+</table>
+<form method="post" action="{{ root }}/wiederherstellen/ausfuehren">
+  <label class="check"><input type="checkbox" name="bestaetigt" required> Ich weiß, dass alle aktuellen Daten ersetzt werden</label>
+  <button class="btn danger">Jetzt wiederherstellen</button>
+</form>
+{% else %}
+<p class="muted">Für den Neuaufbau von Home Assistant: Installiere das Add-on, öffne diese Seite und wähle die Sicherung. Fotos kommen aus dem Ordner <code>photos</code> neben der Sicherung. Du siehst vor dem Einspielen, was ersetzt wird.</p>
+<h2>Sicherung auswählen</h2>
+<form method="post" action="{{ root }}/wiederherstellen/pruefen">
+</form>
+{% for s in servers %}
+<form method="post" action="{{ root }}/wiederherstellen/pruefen">
+  <p>Auf dem Server: <b>{{ s.path }}</b>, {{ s.when }}, {{ s.kb }} kB.</p>
+  <input type="hidden" name="quelle" value="server"><input type="hidden" name="nr" value="{{ s.nr }}">
+  <button class="btn">Server-Sicherung prüfen</button>
+</form>
+{% else %}<p class="muted">Auf dem Server liegt keine Sicherung.</p>{% endfor %}
+<form method="post" action="{{ root }}/wiederherstellen/pruefen" enctype="multipart/form-data">
+  <input type="hidden" name="quelle" value="upload">
+  <label>Oder eine Datei hochladen (Export oder <code>growmi-latest.json</code>)<input type="file" name="datei" accept="application/json,.json" required></label>
+  <button class="btn">Hochgeladene Datei prüfen</button>
+</form>
+{% endif %}
+<p><a href="{{ root }}/einstellungen">Zurück zu den Einstellungen</a></p>
+{% endblock %}

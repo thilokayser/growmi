@@ -1,0 +1,108 @@
+blueprint:
+  name: Growmi – Fan control
+  description: >-
+    Controls the tent fan. Mode "Auto" follows the on/off times and additionally switches the fan on at the heat
+    limit until the temperature is back below the lower limit (only while the climate sensor is online).
+    "Dauer an" and "Dauer aus" hold it on or off. The mode helper must be an input_select with the options
+    Auto, Dauer an, Dauer aus (the same one you give Growmi under Settings).
+  domain: automation
+  author: Growmi contributors
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    fan_switch:
+      name: Fan switch
+      selector:
+        entity:
+          domain: switch
+    fan_mode:
+      name: Fan mode (input_select with Auto, Dauer an, Dauer aus)
+      selector:
+        entity:
+          domain: input_select
+    fan_on:
+      name: Fan on (input_datetime, time only)
+      selector:
+        entity:
+          domain: input_datetime
+    fan_off:
+      name: Fan off (input_datetime, time only)
+      selector:
+        entity:
+          domain: input_datetime
+    temperature:
+      name: Temperature sensor
+      selector:
+        entity:
+          domain: sensor
+    sensor_online:
+      name: Climate sensor online (binary_sensor)
+      selector:
+        entity:
+          domain: binary_sensor
+    heat_on:
+      name: Switch on at (°C)
+      default: 26
+      selector:
+        number:
+          min: 18
+          max: 40
+          unit_of_measurement: °C
+    heat_off:
+      name: Switch off again below (°C)
+      default: 24
+      selector:
+        number:
+          min: 15
+          max: 40
+          unit_of_measurement: °C
+mode: single
+variables:
+  switch_entity: !input fan_switch
+  mode_entity: !input fan_mode
+  on_entity: !input fan_on
+  off_entity: !input fan_off
+  temp_entity: !input temperature
+  online_entity: !input sensor_online
+  limit_on: !input heat_on
+  limit_off: !input heat_off
+  fan_action: >-
+    {%- set modus = states(mode_entity) -%}
+    {%- set t = states(temp_entity) | float(-99) -%}
+    {%- set online = is_state(online_entity, 'on') -%}
+    {%- set running = is_state(switch_entity, 'on') -%}
+    {%- set on_t = state_attr(on_entity, 'timestamp') | float(0) -%}
+    {%- set off_t = state_attr(off_entity, 'timestamp') | float(0) -%}
+    {%- set now_t = now().hour * 3600 + now().minute * 60 + now().second -%}
+    {%- if on_t < off_t -%}
+    {%- set sched = 'switch.turn_on' if on_t <= now_t and now_t < off_t else 'switch.turn_off' -%}
+    {%- else -%}
+    {%- set sched = 'switch.turn_on' if now_t >= on_t or now_t < off_t else 'switch.turn_off' -%}
+    {%- endif -%}
+    {%- if modus == 'Dauer an' -%}switch.turn_on
+    {%- elif modus == 'Dauer aus' -%}switch.turn_off
+    {%- elif online and t >= limit_on -%}switch.turn_on
+    {%- elif online and t >= limit_off and running -%}switch.turn_on
+    {%- else -%}{{ sched }}{%- endif -%}
+triggers:
+- trigger: time
+  at: !input fan_on
+- trigger: time
+  at: !input fan_off
+- trigger: state
+  entity_id: !input fan_mode
+- trigger: state
+  entity_id: !input temperature
+- trigger: state
+  entity_id: !input sensor_online
+  to: "on"
+- trigger: homeassistant
+  event: start
+conditions:
+- condition: template
+  value_template: >-
+    {{ state_attr(on_entity, 'timestamp') is not none and state_attr(off_entity, 'timestamp') is not none }}
+actions:
+- action: "{{ fan_action | trim }}"
+  target:
+    entity_id: !input fan_switch

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Auswertung{% endblock %}
+{% macro bar(value, maximum) %}{% if value %}<div class="vbar" aria-hidden="true"><i style="width:{{ (value / maximum * 100)|round(1) }}%"></i></div>{% endif %}{% endmacro %}
+{% block content %}
+<h1>Auswertung</h1>
+<div class="actions"><a class="btn" href="{{ root }}/export.csv">CSV exportieren</a></div>
+{% if not groups %}<p>Noch keine Pflanzen.</p>{% endif %}
+{% if ranking %}
+<section class="sorte-group ranking">
+  <h2>Rangliste der Sorten</h2>
+  <table class="num">
+    <thead><tr><th scope="col">#</th><th scope="col">Sorte</th><th scope="col">Ernten</th><th scope="col">Ø Ertrag</th><th scope="col">Ø g pro €</th><th scope="col">Ø g pro kWh</th><th scope="col">Ø Bewertung</th></tr></thead>
+    <tbody>
+    {% for r in ranking %}
+    <tr class="rank"><td data-label="Platz">{{ loop.index }}</td><td data-label="Sorte">{{ r.sorte }}</td><td data-label="Ernten">{{ r.n }}</td>
+      <td data-label="Ø Ertrag">{{ '%g g' % (r.avg_g|round(1)) }}</td>
+      <td data-label="Ø g pro €">{{ ('%.1f' % r.avg_g_per_eur) if r.avg_g_per_eur else '–' }}</td>
+      <td data-label="Ø g pro kWh">{{ ('%.1f' % r.avg_g_per_kwh) if r.avg_g_per_kwh else '–' }}</td>
+      <td data-label="Ø Bewertung">{{ ('%.1f von 5' % r.avg_bew) if r.avg_bew else '–' }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% for g in groups %}
+<section class="sorte-group">
+  <h2>{{ g.sorte }}</h2>
+  {% if avgs[g.sorte] %}<p class="muted num">⌀ {% for label, v in avgs[g.sorte] %}{{ label }} {{ ('%g' % (v|round(1))) if v is not none else '–' }}{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}
+  <table class="num">
+    <thead><tr><th scope="col">Pflanze</th><th scope="col">Ertrag trocken</th><th scope="col">Wasser</th><th scope="col">Dünger</th><th scope="col">Strom</th><th scope="col">Kosten</th><th scope="col">g pro L</th><th scope="col">g pro ml</th><th scope="col">g pro kWh</th><th scope="col">€ pro g</th><th scope="col">Bewertung</th></tr></thead>
+    <tbody>
+    {% for t in g.plants %}
+    {% set p = info[t.plant_id] %}
+    <tr class="plant">
+      <td data-label="Pflanze"><a href="{{ root }}/pflanze/{{ t.plant_id }}">Platz {{ p.slot }} · {{ p.keimdatum|dt }}</a>{% if p.typ %}<br><small>{{ p.typ|typ }}</small>{% endif %}</td>
+      <td data-label="Ertrag trocken">{{ ('%g g' % t.trocken_g) if t.trocken_g else '–' }}{{ bar(t.trocken_g, maxima.trocken_g) }}</td>
+      <td data-label="Wasser">{{ ('%g L' % (t.water_l|round(1))) if t.water_l else '–' }}{{ bar(t.water_l, maxima.water_l) }}</td>
+      <td data-label="Dünger"><span>{% for name, ml in t.fert_ml.items() %}{{ name }} {{ '%g' % (ml|round(1)) }} ml{{ '<br>'|safe if not loop.last }}{% else %}–{% endfor %}</span></td>
+      <td data-label="Strom">{{ ('%.1f kWh' % t.kwh) if t.kwh is not none else '–' }}</td>
+      <td data-label="Kosten">{{ ('%.2f €' % t.cost_eur) if t.cost_eur is not none else '–' }}</td>
+      <td data-label="g pro L">{{ ('%g g/L' % (t.g_per_l|round(2))) if t.g_per_l else '–' }}{{ bar(t.g_per_l, maxima.g_per_l) }}</td>
+      <td data-label="g pro ml">{{ ('%g g/ml' % (t.g_per_ml|round(2))) if t.g_per_ml else '–' }}</td>
+      <td data-label="g pro kWh">{{ ('%.2f g/kWh' % t.g_per_kwh) if t.g_per_kwh else '–' }}</td>
+      <td data-label="€ pro g">{{ ('%.2f €/g' % t.eur_per_g) if t.eur_per_g else '–' }}</td>
+      <td data-label="Bewertung">{% if p.bew_geschmack or p.bew_wirkung or p.bew_aufwand or p.trocknung_tage %}<span>Geschmack {{ p.bew_geschmack or '–' }} · Wirkung {{ p.bew_wirkung or '–' }} · Aufwand {{ p.bew_aufwand or '–' }}{% if p.trocknung_tage %}<br>Trocknung {{ p.trocknung_tage }} Tage{% endif %}</span>{% else %}–{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+{% if klima %}
+<section class="sorte-group">
+  <h2>Klima pro Phase</h2>
+  <table class="num">
+    <thead><tr><th scope="col">Phase</th><th scope="col">Tage</th><th scope="col">Ø Temperatur</th><th scope="col">Ø Luftfeuchte</th><th scope="col">Ø VPD</th><th scope="col">VPD im Ziel</th><th scope="col">Strom</th><th scope="col">Hitze-Ereignisse</th></tr></thead>
+    <tbody>
+    {% for k in klima %}
+    <tr class="plant">
+      <td data-label="Phase"><span class="chip ph-{{ k.phase }}">{{ tr(k.phase) }}</span></td>
+      <td data-label="Tage">{{ k.days }}</td>
+      <td data-label="Ø Temperatur">{{ ('%.1f °C' % k.t_avg) if k.t_avg is not none else '–' }}</td>
+      <td data-label="Ø Luftfeuchte">{{ ('%.0f %%' % k.rh_avg) if k.rh_avg is not none else '–' }}</td>
+      <td data-label="Ø VPD">{{ ('%.2f kPa' % k.vpd_avg) if k.vpd_avg is not none else '–' }}</td>
+      <td data-label="VPD im Ziel">{{ ('%g %%' % (k.ok_pct|round(0))) if k.ok_pct is not none else '–' }}</td>
+      <td data-label="Strom">{{ ('%.1f kWh' % k.kwh) if k.kwh is not none else '–' }}</td>
+      <td data-label="Hitze-Ereignisse">{{ k.hitze }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

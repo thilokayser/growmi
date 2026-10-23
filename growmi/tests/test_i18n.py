@@ -64,9 +64,10 @@ def visible_text(html: str) -> list[str]:
 
 def test_english_pages_contain_no_german(web):
     ids = populate(web)
-    web.conn().execute("DELETE FROM box_event")  # stored in the language they were created in
-    web.conn().commit()
-    config.save(web.conn(), {**config.EXAMPLE, "lang": "en"})
+    c = web.conn()  # one connection for the whole write, a second one would find the database locked
+    c.execute("DELETE FROM box_event")  # stored in the language they were created in
+    c.commit()
+    config.save(c, {**config.EXAMPLE, "lang": "en"})
     i18n.set_lang("en")
     problems = []
     for path in paths(ids):

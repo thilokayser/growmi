@@ -21,6 +21,17 @@ Plant journal, history and analysis for your grow tent, as a Home Assistant add-
 - German and English UI, dark and light theme, mobile first.
 - **Backup**: nightly copy with photos, and a restore page for a rebuilt Home Assistant.
 
+## Screenshots
+
+<p align="center">
+<img src="docs/screenshots/home.png" alt="Tent overview with climate tiles and spots" width="23%">
+<img src="docs/screenshots/pflanze.png" alt="Plant page with journal and totals" width="23%">
+<img src="docs/screenshots/cockpit.png" alt="Cockpit with alarms, devices and modes" width="23%">
+<img src="docs/screenshots/heatmap.png" alt="Climate heatmap" width="23%">
+</p>
+
+*Demo data, invented for this page.*
+
 ## Install
 
 1. In Home Assistant open **Settings → Add-ons → Add-on Store → ⋮ → Repositories** and add `https://github.com/thilokayser/growmi`.

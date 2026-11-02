@@ -562,4 +562,7 @@ EN: dict[str, str] = {
     "{n} Pflanze(n) auf {target} gesetzt": "{n} plant(s) moved to {target}",
     "Anzeige-Modus öffnen": "Open display mode",
     "Anzeige-Modus beenden": "Leave display mode",
+    "Nachkontrolle Mangel: besser geworden?": "Follow-up on deficiency: better?",
+    "Nachkontrolle Schädling: besser geworden?": "Follow-up on pests: better?",
+    "Trichome prüfen (klar, milchig, bernstein) und Trockenplatz vorbereiten": "Check trichomes (clear, cloudy, amber) and prepare the drying spot",
 }

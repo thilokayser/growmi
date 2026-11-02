@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.23.0
+- A "Mangel" or "Schädling" entry creates a check-up task five days later.
+- Autoflowers get a trichome and drying-spot task on day 78.
+
 ## 0.22.1
 - Display mode (kiosk) can be opened with an icon in the top right next to the theme switch, and left again from the display page.
 

@@ -12,6 +12,7 @@ RULES = [
     ("spuelen", "Spülen beginnen (ca. 10 Tage vor Ernte)", "bluete", 53, "photo"),
     ("ernte", "Ernte-Reife prüfen (Trichome)", "bluete", 63, "photo"),
     ("auto_bluete", "Blütebeginn prüfen (Tag 35)", "keim", 35, "auto"),
+    ("auto_trichome", "Trichome prüfen (klar, milchig, bernstein) und Trockenplatz vorbereiten", "keim", 78, "auto"),
     ("auto_spuelen", "Spülen beginnen (Tag 70)", "keim", 70, "auto"),
     ("auto_ernte", "Ernte-Reife prüfen (Tag 85)", "keim", 85, "auto"),
 ]

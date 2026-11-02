@@ -1,7 +1,11 @@
+from datetime import date, timedelta
+
 from . import plants
 from .i18n import tr
 
 TAGS = ("Mangel", "Schädling", "Stress", "Hitze", "Schimmel")
+FOLLOW_UP_TAGS = ("Mangel", "Schädling")
+FOLLOW_UP_DAYS = 5
 ARTEN = ("Notiz", "Topping", "LST", "Umtopfen", "Schädling", "Sonstiges")
 TABLES = {"watering": "watering", "intervention": "intervention", "photo": "photo"}
 EDITABLE = {"watering": {"ts", "liters", "ph", "ec"},
@@ -18,6 +22,10 @@ def add_intervention(conn, *, ts: str, plant_id: int, art: str, text: str = "", 
     plants.require_plants(conn, [plant_id])
     cur = conn.execute("INSERT INTO intervention(ts, plant_id, art, text, tag) VALUES (?,?,?,?,?)",
                        (ts, plant_id, art, text, tag))
+    due = date.fromisoformat(ts[:10]) + timedelta(days=FOLLOW_UP_DAYS)
+    if tag in FOLLOW_UP_TAGS and due >= date.today():  # a back-filled old entry needs no check-up
+        conn.execute("INSERT OR IGNORE INTO task(plant_id, key, title, due) VALUES (?,?,?,?)",
+                     (plant_id, f"nachkontrolle-{cur.lastrowid}", tr("Nachkontrolle Mangel: besser geworden?") if tag == "Mangel" else tr("Nachkontrolle Schädling: besser geworden?"), due.isoformat()))
     conn.commit()
     return cur.lastrowid
 

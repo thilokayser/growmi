@@ -77,3 +77,16 @@ def test_unknown_plant_rejected_for_intervention_and_photo(conn):
         entries.add_intervention(conn, ts="2026-10-20T12:00", plant_id=99, art="Topping")
     with pytest.raises(ValueError):
         entries.add_photo(conn, ts="2026-10-20T12:00", plant_id=99, filename="x.jpg")
+
+
+def test_mangel_entry_creates_a_follow_up_task(conn):
+    from datetime import date
+    from app import entries, plants, tasks
+    pid = plants.add_plant(conn, sorte="A", hersteller="", keimdatum="2026-09-01", slot=1, phase="Wachstum",
+                           eingesetzt_am="2026-09-01T08:00", typ="auto")
+    today = date.today().isoformat()
+    entries.add_intervention(conn, ts=f"{today}T10:00", plant_id=pid, art="Notiz", tag="Mangel")
+    entries.add_intervention(conn, ts=f"{today}T10:00", plant_id=pid, art="Notiz", tag="Stress")
+    entries.add_intervention(conn, ts="2026-01-01T10:00", plant_id=pid, art="Notiz", tag="Mangel")  # old: no check-up
+    open_ = tasks.plant_tasks(conn, pid)
+    assert [t["title"] for t in open_] == ["Nachkontrolle Mangel: besser geworden?"]

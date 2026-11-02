@@ -7,3 +7,4 @@ __pycache__/
 .ha_token
 stl/
 urls.json
+.superdesign/

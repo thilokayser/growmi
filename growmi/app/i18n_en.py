@@ -565,4 +565,5 @@ EN: dict[str, str] = {
     "Nachkontrolle Mangel: besser geworden?": "Follow-up on deficiency: better?",
     "Nachkontrolle Schädling: besser geworden?": "Follow-up on pests: better?",
     "Trichome prüfen (klar, milchig, bernstein) und Trockenplatz vorbereiten": "Check trichomes (clear, cloudy, amber) and prepare the drying spot",
+    "Luftfeuchte 24 h": "Humidity 24 h",
 }

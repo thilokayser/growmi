@@ -320,3 +320,12 @@ fieldset.device { display: flex; flex-direction: column; gap: .7rem; padding: .9
 fieldset.device legend { color: var(--muted); font-size: .85rem; padding: 0 .4rem; }
 fieldset.device label:has([data-test]) { gap: .3rem; }
 output { font-size: .9rem; }
+
+.tile-range { color: var(--muted); font-size: .78rem; margin-top: .15rem; }
+.climate-tiles { grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+.climate-tiles .tile { padding: .75rem .8rem; }
+.climate-tiles .tile-value { font-size: 1.35rem; }
+.device-card { display: flex; flex-direction: column; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--hairline); margin-bottom: 1rem; }
+.device-row { display: flex; justify-content: space-between; align-items: center; gap: .6rem; padding: .75rem 1rem; }
+.device-row + .device-row { border-top: 1px solid var(--hairline); }
+.device-name { font-weight: 600; }

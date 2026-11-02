@@ -13,15 +13,24 @@
   {% else %}<p class="all-clear">Keine Alarme. Sensor {{ tr('online') if online == 'on' else '–' }}{% if battery %}, Batterie {{ battery }} %{% endif %}.</p>{% endif %}
 </section>
 
+{% if live.has.temp or live.has.rh or live.has.vpd %}<section aria-labelledby="klima">
+  <h2 id="klima" class="visually-hidden">Klima</h2>
+  <div class="tiles climate-tiles">
+    {% if live.has.temp %}<div class="tile"><span class="tile-label">Temperatur</span><span class="tile-value num">{{ live.temp or '–' }}{% if live.temp %}<small> °C</small>{% endif %}</span>{% if ranges.temp %}<span class="tile-range num">{{ ranges.temp }}</span>{% endif %}</div>{% endif %}
+    {% if live.has.rh %}<div class="tile"><span class="tile-label">Luftfeuchte</span><span class="tile-value num">{{ live.rh or '–' }}{% if live.rh %}<small> %</small>{% endif %}</span>{% if ranges.rh %}<span class="tile-range num">{{ ranges.rh }}</span>{% endif %}</div>{% endif %}
+    {% if live.has.vpd %}<div class="tile"><span class="tile-label">VPD</span><span class="tile-value num">{{ live.vpd or '–' }}{% if live.vpd %}<small> kPa</small>{% endif %}</span>
+      {% if live.vpd_status %}<span class="tile-status {{ live.vpd_status }}"><i aria-hidden="true"></i>{{ tr('im Ziel') if live.vpd_status == 'ok' else tr('außerhalb') }}</span>{% endif %}{% if ranges.vpd %}<span class="tile-range num">{{ ranges.vpd }}</span>{% endif %}</div>{% endif %}
+  </div>
+</section>{% endif %}
+
 {% if devices or has_fan or has_exhaust or has_battery %}<section aria-labelledby="geraete">
   <h2 id="geraete">Geräte</h2>
-  <div class="tiles">
+  <div class="device-card">
     {% for d in devices %}
-    <div class="tile"><span class="tile-label">{{ d.name }}</span>
-      <span class="tile-value">{{ '–' if d.on is none else (tr('an') if d.on else tr('aus')) }}</span>
-      <span class="tile-status {{ '' if d.on else 'warn' }}"><i aria-hidden="true"></i>{{ tr('läuft') if d.on else (tr('steht') if d.on is not none else tr('unbekannt')) }}</span></div>
+    <div class="device-row"><span class="device-name">{{ d.name }}</span>
+      <span class="tile-status {{ '' if d.on else 'warn' }}"><i aria-hidden="true"></i>{{ (tr('an') if d.on else tr('aus')) if d.on is not none else '–' }} · {{ tr('läuft') if d.on else (tr('steht') if d.on is not none else tr('unbekannt')) }}</span></div>
     {% endfor %}
-    {% if has_battery %}<div class="tile"><span class="tile-label">Batterie</span><span class="tile-value num">{{ battery or '–' }}{% if battery %}<small> %</small>{% endif %}</span></div>{% endif %}
+    {% if has_battery %}<div class="device-row"><span class="device-name">Batterie</span><span class="num">{{ battery or '–' }}{% if battery %} %{% endif %}</span></div>{% endif %}
   </div>
   {% if has_fan %}<form method="post" action="{{ root }}/cockpit/ventilator" class="segmented" aria-label="Ventilator-Modus">
     {% for m in modes %}<button class="seg {{ 'active' if mode == m }}" name="modus" value="{{ m }}" {{ 'aria-pressed=true' if mode == m else 'aria-pressed=false' }}>{{ tr(m) }}</button>{% endfor %}

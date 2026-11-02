@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.24.0
+- Cockpit redesign: climate tiles (temperature, humidity, VPD with 24 h range) right under the alarms, devices in one grouped card.
+
 ## 0.23.0
 - A "Mangel" or "Schädling" entry creates a check-up task five days later.
 - Autoflowers get a trichome and drying-spot task on day 78.

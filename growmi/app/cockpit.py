@@ -41,6 +41,9 @@ def build(ha, conn, options: dict, now: datetime) -> dict:
         vals = ha.history(energy, datetime.combine(now.date(), time.min), now)
         kwh = jobs.consumption(vals)
     price = settings.strompreis(ha, options)
+    charts = {"temp": _chart(ha, config.entity("temp"), tr("Temperatur 24 h"), "°C", now),
+              "rh": _chart(ha, config.entity("rh"), tr("Luftfeuchte 24 h"), "%", now),
+              "vpd": _chart(ha, config.entity("vpd"), tr("VPD 24 h"), "kPa", now)}
     return {
         "devices": [{"name": d["name"], "on": None if not d.get("entity") or (s := ha.state(d["entity"])) is None else s == "on"}
                     for d in config.devices()],
@@ -49,8 +52,8 @@ def build(ha, conn, options: dict, now: datetime) -> dict:
         "has_fan": bool(config.entity("fan_mode")), "has_exhaust": bool(config.entity("exhaust_mode")),
         "has_maintenance": bool(config.entity("maintenance")), "has_battery": bool(config.entity("battery")),
         "alerts": alerts, "tasks": tasks.due_tasks(conn, now.date()),
-        "charts": [c for c in (_chart(ha, config.entity("temp"), tr("Temperatur 24 h"), "°C", now),
-                               _chart(ha, config.entity("vpd"), tr("VPD 24 h"), "kPa", now)) if c],
+        "charts": [c for c in (charts["temp"], charts["vpd"]) if c],
+        "ranges": {k: f"{c['min']:g} – {c['max']:g}" for k, c in charts.items() if c},
         "kwh": f"{kwh:.2f}" if kwh is not None else None,
         "eur": f"{kwh * price:.2f}" if kwh is not None and price > 0 else None,
         "events": events.list_events(conn, 8), "today_iso": now.date().isoformat(),

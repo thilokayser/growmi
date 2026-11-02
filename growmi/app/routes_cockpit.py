@@ -2,7 +2,8 @@ from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 
-from . import cockpit, config, events, phase_link, plants, tasks
+from . import cockpit, config, events, jobs, phase_link, plants, tasks
+from .routes_home import live_values
 from .routes_plants import _detail, _plant_or_404, _safe_back
 from .web import get_conn, redirect, render
 from .i18n import tr
@@ -12,7 +13,9 @@ router = APIRouter()
 
 def _page(request, conn, status=200, error=None):
     data = cockpit.build(request.app.state.ha, conn, request.app.state.options, datetime.now())
-    return render(request, "cockpit.html", status, error=error, **data)
+    ha = request.app.state.ha
+    box = config.state(ha, "phase") or jobs.last_box_phase(conn)
+    return render(request, "cockpit.html", status, error=error, live=live_values(ha, box), **data)
 
 
 @router.get("/cockpit")

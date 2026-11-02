@@ -4,7 +4,7 @@ from datetime import date, datetime
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 
-from . import calc, config, entries, images, jobs, phase_link, plants, watering
+from . import calc, config, entries, heatmap, images, jobs, phase_link, plants, watering
 from .web import get_conn, redirect, render
 from .i18n import tr
 
@@ -68,7 +68,7 @@ def _num(ha, key: str, digits: int) -> str | None:
 
 def live_values(ha, box_phase: str | None) -> dict:
     vpd = _num(ha, "vpd", 2)
-    band = jobs.VPD_TARGET.get(box_phase or "")
+    band = heatmap.band(box_phase)
     status = None
     if vpd and band:
         status = "ok" if band[0] <= float(vpd) <= band[1] else "warn"

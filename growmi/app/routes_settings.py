@@ -3,7 +3,7 @@ import re
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from . import config, i18n, plants
+from . import config, heatmap, i18n, plants
 from .i18n import tr
 from .web import get_conn, redirect, render
 from .i18n import tr
@@ -50,6 +50,12 @@ def parse(form) -> dict:
         devices.append({"key": key, "name": name or entity, "wear_name": wear.strip(), "entity": entity,
                         "role": role.strip(), "wear_limit_h": plants.parse_decimal(limit) if limit.strip() else None})
     data["devices"] = devices
+    bands = {}
+    for ph in ("Keimling", "Wachstum", "Blüte"):
+        lo, hi = form.get(f"vpd_lo_{ph}") or "", form.get(f"vpd_hi_{ph}") or ""
+        if lo.strip() and hi.strip():  # both empty = default band
+            bands[ph] = [plants.parse_decimal(lo), plants.parse_decimal(hi)]
+    data["vpd_bands"] = bands
     return data
 
 
@@ -58,7 +64,7 @@ def _page(request: Request, cfg: dict, status=200, error=None, saved=False):
     lists = {name: [i for i in ids if i.split(".")[0] in domains] for name, domains in LISTS.items()}
     slot_text = "\n".join(n or tr("Platz {n}", n=i) for i, n in enumerate(cfg["slots"], 1))
     return render(request, "einstellungen.html", status, cfg=cfg, lists=lists, error=error, saved=saved, slot_text=slot_text,
-                  roles=config.ROLES, spare=range(2))
+                  roles=config.ROLES, spare=range(2), default_bands=heatmap.VPD_TARGET)
 
 
 @router.get("/einstellungen")

@@ -5,6 +5,12 @@ from .i18n import tr
 
 VPD_TARGET = {"Keimling": (0.4, 0.8), "Wachstum": (0.8, 1.2), "Blüte": (1.2, 1.6)}  # same bands as the dashboard card
 NIGHT_BAND = (0.5, 0.9)
+
+
+def band(phase: str | None) -> tuple[float, float] | None:
+    """Daytime VPD band of a phase: the install's own setting wins over the default."""
+    own = config.current.get("vpd_bands", {}).get(phase or "")
+    return tuple(own) if own else VPD_TARGET.get(phase or "")
 DAYS = 10
 
 
@@ -39,7 +45,7 @@ def hourly_means(points: list, day: date) -> dict[int, float]:
 
 def classify(vpd: float, light: bool, phase: str | None) -> int:
     """-1 too humid (VPD below the band), 0 in band, +1 too dry."""
-    lo, hi = VPD_TARGET.get(phase or "", VPD_TARGET["Wachstum"]) if light else NIGHT_BAND
+    lo, hi = (band(phase) or band("Wachstum")) if light else NIGHT_BAND
     return -1 if vpd < lo else 1 if vpd > hi else 0
 
 

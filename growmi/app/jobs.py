@@ -6,8 +6,7 @@ import os
 import re
 from datetime import date, datetime, time, timedelta
 
-from . import calc, config, db, events, i18n, heatmap, phase_link, plants, report, sensors, settings, snapshot, stock, tasks
-from .heatmap import VPD_TARGET
+from . import calc, config, db, events, i18n, heatmap, phase_link, plants, public, qr, report, sensors, settings, snapshot, stock, tasks
 from .plants import BOX_PHASES
 from .i18n import tr
 
@@ -82,7 +81,7 @@ def climate_summary(conn, ha, day: date, energy_entity: str | None = None) -> No
     phase = conn.execute("SELECT phase FROM box_phase_change WHERE ts <= ? ORDER BY ts DESC, id DESC LIMIT 1",
                          (f"{day.isoformat()}T23:59",)).fetchone()
     name = phase["phase"] if phase else None
-    lo, hi = VPD_TARGET.get(name, (None, None))
+    lo, hi = heatmap.band(name) or (None, None)
     ok_pct = round(100 * sum(lo <= v <= hi for v in vpd) / len(vpd), 1) if vpd and lo is not None else None
     kwh_values = ha.history(energy_entity, start, end) if energy_entity else []
     kwh = consumption(kwh_values)
@@ -116,7 +115,12 @@ def water_reminders(conn, now: datetime, days: int = 4) -> list[str]:
     return out
 
 
-def photo_reminders(conn, now: datetime, days: int = 7) -> list[str]:
+def _link(urls: dict | None, slot: int) -> str:
+    return f"\n{urls[slot]}" if urls and slot in urls else ""
+
+
+def photo_reminders(conn, now: datetime, days: int = 7, urls: dict | None = None) -> list[str]:
+    """With `urls` (slot -> quick page) every line ends in a link that opens the plant's page for the photo."""
     out = []
     for pid in plants.occupied_plants(conn, now.strftime("%Y-%m-%dT%H:%M")):
         p = conn.execute("SELECT slot, sorte, eingesetzt_am FROM plant WHERE id=?", (pid,)).fetchone()
@@ -124,11 +128,11 @@ def photo_reminders(conn, now: datetime, days: int = 7) -> list[str]:
         if last:
             age = (now.date() - date.fromisoformat(last[:10])).days
             if age >= days:
-                out.append(tr("Platz {slot} {sorte}: seit {n} Tagen kein Foto", slot=p["slot"], sorte=p["sorte"], n=age))
+                out.append(tr("Platz {slot} {sorte}: seit {n} Tagen kein Foto", slot=p["slot"], sorte=p["sorte"], n=age) + _link(urls, p["slot"]))
         else:
             planted = (now.date() - date.fromisoformat(p["eingesetzt_am"][:10])).days
             if planted >= days:
-                out.append(tr("Platz {slot} {sorte}: noch kein Foto (seit {n} Tagen im Zelt)", slot=p["slot"], sorte=p["sorte"], n=planted))
+                out.append(tr("Platz {slot} {sorte}: noch kein Foto (seit {n} Tagen im Zelt)", slot=p["slot"], sorte=p["sorte"], n=planted) + _link(urls, p["slot"]))
     return out
 
 
@@ -317,7 +321,7 @@ def run_once(db_path: str, ha, now: datetime, state: dict, options: dict | None 
                 + phase_link.reminder(conn, ha, now.date())
             last = state.get("photo_reminded")
             if last is None or (now.date() - last).days >= 7:  # photos are a weekly habit, don't nag daily
-                photos = photo_reminders(conn, now)
+                photos = photo_reminders(conn, now, urls=qr.slot_urls(options, ha, public.ensure_secret(conn)))
                 if photos:
                     state["photo_reminded"] = now.date()
                     msgs += photos

@@ -12,7 +12,8 @@ ENTITY_KEYS = ("temp", "rh", "vpd", "online", "battery", "phase", "light_on", "l
 ROLES = ("", "licht", "abluft", "ventilator")
 
 EMPTY = {**dict.fromkeys(ENTITY_KEYS, ""), "lang": "", "phase_link": False, "phase_light_on": "08:00:00",
-         "phase_light_off": "20:00:00", "devices": [], "slots": ["", "", "", ""]}  # empty = default name, resolved in the current language
+         "phase_light_off": "20:00:00", "devices": [], "slots": ["", "", "", ""],
+         "vpd_bands": {}}  # empty = default name, resolved in the current language
 
 # a complete sample configuration: documents the keys, and the tests run on it
 EXAMPLE = {**EMPTY,
@@ -59,6 +60,9 @@ def _validate(data: dict, conn) -> None:
             raise ValueError(tr("{key}: {value} ist keine Entity-ID (Form domain.name)", key=key, value=repr(value)))
     if data["lang"] not in ("", "de", "en"):
         raise ValueError(tr("Unbekannte Sprache: {lang}", lang=data["lang"]))
+    for ph, (lo, hi) in data["vpd_bands"].items():
+        if not 0 < lo < hi < 5:
+            raise ValueError(tr("VPD-Band {phase}: unten muss kleiner als oben sein", phase=tr(ph)))
     for d in data["devices"]:
         if d["role"] not in ROLES:
             raise ValueError(tr("Unbekannte Rolle: {role}", role=d["role"]))

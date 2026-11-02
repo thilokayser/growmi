@@ -110,3 +110,15 @@ def test_run_once_collects_hours(tmp_path):
     c = db.connect(path)
     assert c.execute("SELECT COUNT(*) FROM climate_hour").fetchone()[0] >= 24
     c.close()
+
+
+def test_own_vpd_band_beats_default(conn):
+    from app import config
+    old = config.current
+    try:
+        config.current = {**old, "vpd_bands": {"Blüte": [0.9, 1.3]}}
+        assert heatmap.band("Blüte") == (0.9, 1.3) and heatmap.classify(1.0, True, "Blüte") == 0
+        assert heatmap.band("Wachstum") == heatmap.VPD_TARGET["Wachstum"]
+    finally:
+        config.current = old
+    assert heatmap.classify(1.0, True, "Blüte") == -1

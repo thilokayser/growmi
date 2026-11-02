@@ -80,6 +80,12 @@ def box_phase(request: Request, phase: str = Form(""), licht: str = Form(""), ba
     return redirect(request, _safe_back(back, "/cockpit"))
 
 
+@router.post("/pflanzen/angleichen")
+def plants_align(request: Request, back: str = Form("/cockpit"), conn=Depends(get_conn)):
+    phase_link.align(conn, request.app.state.ha, datetime.now())
+    return redirect(request, _safe_back(back, "/cockpit"))
+
+
 @router.post("/box/spaeter")
 def box_later(request: Request, back: str = Form("/"), conn=Depends(get_conn)):
     phase_link.snooze(conn, date.today())

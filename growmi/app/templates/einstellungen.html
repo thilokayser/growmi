@@ -47,6 +47,14 @@
   <label>Licht an in der Blüte <input type="time" name="phase_light_on" value="{{ cfg.phase_light_on[:5] }}"></label>
   <label>Licht aus in der Blüte <input type="time" name="phase_light_off" value="{{ cfg.phase_light_off[:5] }}"></label>
 
+  <h2>VPD-Bänder (kPa)</h2>
+  <p class="muted">Zielbereich bei Licht an. Leer lassen für die Standardwerte. Gilt für Heatmap, „VPD im Ziel“ und die Cockpit-Anzeige.</p>
+  {% for ph in ('Keimling', 'Wachstum', 'Blüte') %}
+  <div class="row"><b>{{ tr(ph) }}</b>
+    <label>von <input name="vpd_lo_{{ ph }}" inputmode="decimal" size="4" value="{{ (cfg.vpd_bands.get(ph) or [''])[0] }}" placeholder="{{ default_bands[ph][0] }}"></label>
+    <label>bis <input name="vpd_hi_{{ ph }}" inputmode="decimal" size="4" value="{{ (cfg.vpd_bands.get(ph) or ['', ''])[1] }}" placeholder="{{ default_bands[ph][1] }}"></label></div>
+  {% endfor %}
+
   <h2>Ventilator, Abluft, Wartung</h2>
   {{ entity_field('fan_mode', 'Ventilator-Modus', 'select', 'Auswahlliste mit Auto, Dauer an, Dauer aus.') }}
   {{ entity_field('exhaust_mode', 'Abluft-Modus', 'select', 'Auswahlliste mit Feuchteschutz, Standard.') }}

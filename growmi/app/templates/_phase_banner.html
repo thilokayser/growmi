@@ -1,4 +1,12 @@
-{% if phase_suggestion %}
+{% if phase_suggestion and phase_suggestion.align %}
+<aside class="banner" aria-label="Vorschlag">
+  <p>Die Box steht auf <b>{{ tr(phase_suggestion.target) }}</b>, <b>{{ phase_suggestion.names|join(', ') }}</b> {{ tr('ist') if phase_suggestion.names|length == 1 else tr('sind') }} im Tagebuch noch in einer früheren Phase. Phasenvergleiche und Wochenpläne rechnen sonst falsch.</p>
+  <div class="actions">
+    <form class="inline-form" method="post" action="{{ root }}/pflanzen/angleichen"><input type="hidden" name="back" value="{{ back }}"><button class="btn">Pflanzen auf {{ tr(phase_suggestion.target) }} setzen</button></form>
+    <form class="inline-form" method="post" action="{{ root }}/box/spaeter"><input type="hidden" name="back" value="{{ back }}"><button class="btn ghost">Nicht heute</button></form>
+  </div>
+</aside>
+{% elif phase_suggestion %}
 <aside class="banner" aria-label="Vorschlag">
   <p><b>{{ phase_suggestion.names|join(', ') }}</b> {{ tr('ist') if phase_suggestion.names|length == 1 else tr('sind') }} in <b>{{ tr(phase_suggestion.target) }}</b>,
   die Box steht noch auf {{ tr(phase_suggestion.box) }}. Das Ziel-VPD{% if phase_suggestion.target == 'Blüte' %} und das Licht{% endif %} folgen der Box-Phase.</p>

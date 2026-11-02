@@ -551,4 +551,13 @@ EN: dict[str, str] = {
     "Wirklich löschen?": "Really delete?",
     "Zähler auf 0 setzen?": "Reset the counter to 0?",
     "Platz {n}": "Spot {n}",
+    "Die Box steht auf": "The box is in",
+    "Pflanzen auf {0} setzen": "Move plants to {0}",
+    "VPD-Band {phase}: unten muss kleiner als oben sein": "VPD band {phase}: lower value must be below the upper one",
+    "VPD-Bänder (kPa)": "VPD bands (kPa)",
+    "Zielbereich bei Licht an. Leer lassen für die Standardwerte. Gilt für Heatmap, „VPD im Ziel“ und die Cockpit-Anzeige.": "Target range with the light on. Leave empty for the defaults. Used by the heatmap, “VPD in target” and the cockpit display.",
+    "von": "from",
+    "{0} im Tagebuch noch in einer früheren Phase. Phasenvergleiche und Wochenpläne rechnen sonst falsch.": "{0} still in an earlier phase in the diary. Phase comparisons and weekly plans are otherwise wrong.",
+    "{names}: Box ist in {target}, die Pflanze(n) noch nicht. Im Tagebuch angleichen.": "{names}: the box is in {target}, the plant(s) are not yet. Align them in the diary.",
+    "{n} Pflanze(n) auf {target} gesetzt": "{n} plant(s) moved to {target}",
 }

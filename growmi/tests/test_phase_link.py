@@ -94,3 +94,14 @@ def test_daily_reminder_mentions_the_phase_suggestion(tmp_path):
     ha = FakeHA(states={BOX: "Wachstum"})
     jobs.run_once(path, ha, datetime(2026, 10, 22, 10, 0), {}, {"notify_service": "notify.notify"})
     assert any("Box-Phase" in str(d) for _, _, d in ha.service_calls)
+
+
+def test_align_offers_and_moves_plants_behind_a_bluete_box(conn):
+    mk(conn, 1, "Wachstum", typ="auto")
+    mk(conn, 2, "Blüte")
+    ha = FakeHA(states={BOX: "Blüte"})
+    s = phase_link.suggestion(conn, ha, TODAY)
+    assert s["align"] and s["names"] == ["S1"] and s["target"] == "Blüte"
+    assert phase_link.align(conn, ha, datetime(2026, 10, 22, 9, 0)) == 1
+    assert plants.current_phase(conn, 1) == "Blüte" and phase_link.suggestion(conn, ha, TODAY) is None
+    assert phase_link.align(conn, FakeHA(states={BOX: "Wachstum"}), datetime(2026, 10, 22, 9, 0)) == 0

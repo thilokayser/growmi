@@ -128,3 +128,9 @@ def test_plant_page_has_no_height_section(web):
     pid = seed_plant(web, 1)
     assert "Höhe messen" not in web.client.get(f"/pflanze/{pid}").text
     assert web.client.post(f"/pflanze/{pid}/hoehe", data={"height_cm": "5"}).status_code == 404
+
+
+def test_photo_reminder_carries_the_quick_page_link(conn):
+    mk(conn, 1)
+    msg = jobs.photo_reminders(conn, NOW, days=0, urls={1: "http://x/s/k/platz/1"})[0]
+    assert msg.endswith("\nhttp://x/s/k/platz/1")

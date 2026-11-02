@@ -560,4 +560,6 @@ EN: dict[str, str] = {
     "{0} im Tagebuch noch in einer früheren Phase. Phasenvergleiche und Wochenpläne rechnen sonst falsch.": "{0} still in an earlier phase in the diary. Phase comparisons and weekly plans are otherwise wrong.",
     "{names}: Box ist in {target}, die Pflanze(n) noch nicht. Im Tagebuch angleichen.": "{names}: the box is in {target}, the plant(s) are not yet. Align them in the diary.",
     "{n} Pflanze(n) auf {target} gesetzt": "{n} plant(s) moved to {target}",
+    "Anzeige-Modus öffnen": "Open display mode",
+    "Anzeige-Modus beenden": "Leave display mode",
 }

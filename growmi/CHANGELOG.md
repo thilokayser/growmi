@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.22.1
+- Display mode (kiosk) can be opened with an icon in the top right next to the theme switch, and left again from the display page.
+
 ## 0.22.0
 - When the box is in Blüte but plants are still in an earlier phase, a banner offers to move the plants along (autoflowers included).
 - VPD bands per phase are editable in the settings; heatmap, "VPD in target" and the cockpit use them.

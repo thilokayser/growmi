@@ -23,6 +23,7 @@
       <a href="{{ root }}{{ path }}"{% if active == key %} aria-current="page"{% endif %}>{{ icon(ic) }}<span>{{ label }}</span></a>
       {% endfor %}
     </nav>{% endif %}
+    <a class="icon-btn" href="{{ root }}/kiosk" aria-label="{{ tr('Anzeige-Modus öffnen') }}" title="{{ tr('Anzeige-Modus öffnen') }}">{{ icon('maximize') }}</a>
     <button type="button" class="icon-btn theme-btn" data-theme-toggle aria-label="Darstellung wechseln">
       <span data-mode="auto">{{ icon('monitor') }}</span><span data-mode="dark">{{ icon('moon') }}</span><span data-mode="light">{{ icon('sun') }}</span>
     </button>

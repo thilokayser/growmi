@@ -106,3 +106,9 @@ def test_back_values_carry_no_ingress_prefix_because_redirects_add_it(web):
     r = web.client.post(f"/pflanze/{a}/notiz", data={"text": "x", "back": f"/pflanze/{a}/schnell?ok=notiz"},
                         headers={"X-Ingress-Path": "/api/hassio_ingress/abc"})
     assert r.headers["location"] == f"/api/hassio_ingress/abc/pflanze/{a}/schnell?ok=notiz"
+
+
+def test_kiosk_toggle_buttons(web):
+    assert 'href="/kiosk"' in web.client.get("/cockpit").text
+    t = web.client.get("/kiosk").text
+    assert 'aria-label="Anzeige-Modus beenden"' in t and 'href="/"' in t

@@ -10,8 +10,10 @@
   <link rel="stylesheet" href="{{ root }}/static/style.css">
 </head>
 <body class="kiosk">
+  {% from "icons.html" import icon %}
   <main>
-    <header class="kiosk-head"><h1>{{ tr(live.phase) }}</h1><span class="num kiosk-clock">{{ now }}</span></header>
+    <header class="kiosk-head"><h1>{{ tr(live.phase) }}</h1><span class="num kiosk-clock">{{ now }}</span>
+      <a class="icon-btn" href="{{ root }}{{ '/platz/%d'|format(slots()|first) if public else '/' }}" aria-label="{{ tr('Anzeige-Modus beenden') }}" title="{{ tr('Anzeige-Modus beenden') }}">{{ icon('minimize') }}</a></header>
     <section class="tiles kiosk-tiles" aria-label="Aktuelle Werte">
       {% if live.has.temp %}<div class="tile"><span class="tile-label">Temperatur</span><span class="tile-value num">{{ live.temp or '–' }}{% if live.temp %}<small> °C</small>{% endif %}</span></div>{% endif %}
       {% if live.has.rh %}<div class="tile"><span class="tile-label">Luftfeuchte</span><span class="tile-value num">{{ live.rh or '–' }}{% if live.rh %}<small> %</small>{% endif %}</span></div>{% endif %}

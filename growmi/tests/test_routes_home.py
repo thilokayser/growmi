@@ -53,9 +53,12 @@ def test_giessen_form_preselects_current_box_phase_recipe(web):
     assert 'value="wasser"' in r.text
 
 
-def post_giessen(web, **form):
-    data = {"liters": "2", "rezept": "wasser", "ts": "2026-10-20T12:00"}
-    data.update(form)
+def post_giessen(web, liters="2", plant_ids=(), ml=None, **form):
+    """`liters` for each of `plant_ids`; `ml` is {fertilizer id: ml} per plant."""
+    data = {"rezept": "wasser", "ts": "2026-10-20T12:00", **form}
+    for pid in plant_ids:
+        data[f"liters_{pid}"] = liters
+        data.update({f"ml_{pid}_{fid}": str(v) for fid, v in (ml or {}).items()})
     return web.client.post("/giessen", data=data)
 
 
@@ -75,7 +78,7 @@ def test_post_giessen_uses_recipe_of_chosen_phase(web):
     f = watering.add_fertilizer(c, "Bloom", "BioBizz")
     watering.set_recipe(c, "Blüte", [(f, 2.0)])
     c.close()
-    post_giessen(web, liters="3", rezept="Blüte", plant_ids=[pid])
+    post_giessen(web, liters="3", rezept="Blüte", plant_ids=[pid], ml={f: 6})
     c = web.conn()
     assert c.execute("SELECT ml_total FROM watering_item").fetchone()[0] == 6.0
     c.close()
@@ -138,7 +141,7 @@ def test_links_use_ingress_prefix(web):
     assert 'href="/api/hassio_ingress/abc/giessen"' in r.text
     r = post_giessen(web, liters="2", plant_ids=[pid])
     assert r.status_code == 303
-    r = web.client.post("/giessen", data={"liters": "2", "rezept": "wasser", "plant_ids": [pid]},
+    r = web.client.post("/giessen", data={f"liters_{pid}": "2", "rezept": "wasser"},
                         headers={"X-Ingress-Path": "/api/hassio_ingress/abc"})
     assert r.headers["location"] == "/api/hassio_ingress/abc/"
 

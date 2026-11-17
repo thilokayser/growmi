@@ -137,10 +137,13 @@ def update_plant(conn, plant_id: int, **fields) -> None:
 
 def delete_plant(conn, plant_id: int) -> list[str]:
     """Removes the plant with phases, interventions and photos; returns photo filenames to delete on disk.
-    Waterings that covered only this plant go too; shared ones stay (their water share shifts to the rest)."""
+    Waterings that covered only this plant go too; shared ones stay without this plant's water and fertilizer."""
     files = [r["filename"] for r in conn.execute("SELECT filename FROM photo WHERE plant_id=?", (plant_id,))]
     conn.execute("DELETE FROM plant WHERE id=?", (plant_id,))
     conn.execute("DELETE FROM watering WHERE id NOT IN (SELECT watering_id FROM watering_plant)")
+    conn.execute("UPDATE watering SET liters=(SELECT SUM(liters) FROM watering_plant WHERE watering_id=watering.id)")
+    conn.execute("UPDATE watering_item SET ml_total=(SELECT COALESCE(SUM(ml), 0) FROM watering_item_plant WHERE item_id=watering_item.id)")
+    conn.execute("DELETE FROM watering_item WHERE ml_total <= 0")
     conn.commit()
     return files
 

@@ -207,7 +207,7 @@ def test_watering_form_offers_and_uses_the_plan(web):
     c.close()
     t = web.client.get("/giessen").text
     assert 'value="plan" selected' in t and "Woche 1" in t
-    web.client.post("/giessen", data={"liters": "2", "rezept": "plan", "plant_ids": [pid]})
+    web.client.post("/giessen", data={f"liters_{pid}": "2", f"ml_{pid}_{f}": "8", "rezept": "plan"})
     c = web.conn()
     assert c.execute("SELECT ml_total FROM watering_item").fetchone()[0] == 8.0
     c.close()

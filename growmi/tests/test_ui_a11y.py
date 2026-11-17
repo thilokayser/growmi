@@ -57,7 +57,8 @@ def test_error_has_role_alert(web):
 
 
 def test_required_fields_marked(web):
-    t = web.client.get("/giessen").text
+    seed_plant(web, 1)
+    t = web.client.get("/pflanze/neu").text
     assert 'class="req"' in t
 
 

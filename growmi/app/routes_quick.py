@@ -25,7 +25,8 @@ def slot_entry(request: Request, slot: int, conn=Depends(get_conn)):
 
 def _quick(request, conn, plant_id, status=200, error=None, form=None):
     p = _plant_or_404(conn, plant_id)
-    last = conn.execute("SELECT liters FROM watering ORDER BY ts DESC, id DESC LIMIT 1").fetchone()
+    last = conn.execute("SELECT wp.liters FROM watering_plant wp JOIN watering w ON w.id=wp.watering_id"
+                        " WHERE wp.plant_id=? ORDER BY w.ts DESC, w.id DESC LIMIT 1", (plant_id,)).fetchone()
     box = jobs.last_box_phase(conn) or "Wachstum"
     recipes = {ph: watering.get_recipe(conn, ph) for ph in plants.BOX_PHASES}
     due = [t for t in tasks.due_tasks(conn, datetime.now().date()) if t["plant_id"] == plant_id]
@@ -49,8 +50,10 @@ def quick_water(request: Request, plant_id: int, liters: str = Form(""), rezept:
     _plant_or_404(conn, plant_id)
     try:
         items = watering.items_for(conn, rezept, datetime.now().date())
-        watering.add_watering(conn, ts=plants.now_ts(), liters=plants.parse_decimal(liters), items=items,
-                              plant_ids=[plant_id] if scope == "only" else None)
+        amount = plants.parse_decimal(liters)  # per plant
+        ids = [plant_id] if scope == "only" else plants.occupied_plants(conn, plants.now_ts())
+        watering.add_watering(conn, ts=plants.now_ts(), liters=0, items=items,
+                              plant_liters={pid: amount for pid in ids})
     except ValueError as e:
         return _quick(request, conn, plant_id, 400, str(e), {"liters": liters, "rezept": rezept})
     return redirect(request, f"/pflanze/{plant_id}/schnell?ok=giessen")

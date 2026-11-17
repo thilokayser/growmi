@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.25.0
+- Watering: enter liters and fertilizer (ml per product) for each plant instead of one amount split equally. The recipe pre-fills the ml fields (liters x ml/L) and you can overwrite them. The plant page and the analysis use each plant's own amounts, the stock count uses the sum.
+- The quick page now takes liters per plant ("all plants" gives each plant that amount).
+- Existing waterings keep their equal split as per-plant values.
+
 ## 0.24.1
 - Heatmap: the first hour after lights-on is judged like the night, so the warm-up hour is no longer marked "too humid".
 

@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS watering_plant(
 CREATE TABLE IF NOT EXISTS watering_item(
   id INTEGER PRIMARY KEY, watering_id INTEGER NOT NULL REFERENCES watering(id) ON DELETE CASCADE,
   produkt TEXT NOT NULL, hersteller TEXT NOT NULL DEFAULT '', ml_per_l REAL NOT NULL, ml_total REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS watering_item_plant(
+  item_id INTEGER NOT NULL REFERENCES watering_item(id) ON DELETE CASCADE,
+  plant_id INTEGER NOT NULL REFERENCES plant(id) ON DELETE CASCADE, ml REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS intervention(
   id INTEGER PRIMARY KEY, ts TEXT NOT NULL, plant_id INTEGER NOT NULL REFERENCES plant(id) ON DELETE CASCADE,
   art TEXT NOT NULL, text TEXT NOT NULL DEFAULT '');
@@ -66,7 +69,7 @@ ADDED_COLUMNS = [("fertilizer", "n", "REAL"), ("fertilizer", "p", "REAL"), ("fer
                  ("plant", "ernte_notiz", "TEXT"), ("climate_day", "vpd_ok_pct", "REAL"),
                  ("climate_day", "kwh", "REAL"), ("plant", "typ", "TEXT"), ("strain", "typ", "TEXT"),
                  ("fertilizer", "bestand_ml", "REAL"), ("fertilizer", "bestand_ab", "TEXT"),
-                 ("intervention", "tag", "TEXT")]
+                 ("intervention", "tag", "TEXT"), ("watering_plant", "liters", "REAL")]
 
 
 def connect(path: str) -> sqlite3.Connection:
@@ -75,6 +78,17 @@ def connect(path: str) -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON")
     return conn
+
+
+def backfill_shares(conn: sqlite3.Connection) -> None:
+    """Waterings used to be shared equally between their plants: store each plant's share (also after an old backup)."""
+    conn.execute("UPDATE watering_plant SET liters=(SELECT w.liters FROM watering w WHERE w.id=watering_id)"
+                 " / (SELECT COUNT(*) FROM watering_plant x WHERE x.watering_id=watering_plant.watering_id) WHERE liters IS NULL")
+    # ml_total of an item is the sum of what each plant got
+    conn.execute("INSERT INTO watering_item_plant(item_id, plant_id, ml)"
+                 " SELECT wi.id, wp.plant_id, wi.ml_total * wp.liters / w.liters FROM watering_item wi"
+                 " JOIN watering w ON w.id=wi.watering_id JOIN watering_plant wp ON wp.watering_id=w.id"
+                 " WHERE NOT EXISTS (SELECT 1 FROM watering_item_plant x WHERE x.item_id=wi.id)")
 
 
 def init_schema(conn: sqlite3.Connection) -> None:
@@ -86,6 +100,7 @@ def init_schema(conn: sqlite3.Connection) -> None:
     for table, column, kind in ADDED_COLUMNS:
         if column not in {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {kind}")
+    backfill_shares(conn)
     # kWh used to be max-min of the meter, which a meter reset inflated: recompute the days the recorder still has
     try:  # height measurements were removed again; drop the table only if nobody entered anything
         if conn.execute("SELECT COUNT(*) FROM measure").fetchone()[0] == 0:

@@ -44,19 +44,18 @@ def _kwh_share(conn, plant_id: int) -> float | None:
 
 def plant_totals(conn, plant_id: int, strompreis: float = 0.0) -> PlantTotals:
     p = conn.execute("SELECT sorte, trocken_g FROM plant WHERE id=?", (plant_id,)).fetchone()
-    # each watering is shared equally between the plants it was recorded for
+    # what this plant itself got of each watering
     waterings = conn.execute(
-        "SELECT w.id, w.liters, (SELECT COUNT(*) FROM watering_plant WHERE watering_id=w.id) AS n"
-        " FROM watering w JOIN watering_plant wp ON wp.watering_id=w.id WHERE wp.plant_id=?", (plant_id,)
-    ).fetchall()
-    water = sum(w["liters"] / w["n"] for w in waterings)
+        "SELECT w.id, wp.liters AS mine FROM watering w JOIN watering_plant wp ON wp.watering_id=w.id"
+        " WHERE wp.plant_id=?", (plant_id,)).fetchall()
+    water = sum(w["mine"] for w in waterings)
     fert: dict[str, float] = {}
     eur: float | None = None
-    for w in waterings:
-        for i in conn.execute("SELECT produkt, ml_total, eur_per_ml FROM watering_item WHERE watering_id=?", (w["id"],)):
-            fert[i["produkt"]] = fert.get(i["produkt"], 0.0) + i["ml_total"] / w["n"]
-            if i["eur_per_ml"] is not None:
-                eur = (eur or 0.0) + i["ml_total"] / w["n"] * i["eur_per_ml"]
+    for i in conn.execute("SELECT wi.produkt, wip.ml, wi.eur_per_ml FROM watering_item_plant wip"
+                          " JOIN watering_item wi ON wi.id=wip.item_id WHERE wip.plant_id=?", (plant_id,)):
+        fert[i["produkt"]] = fert.get(i["produkt"], 0.0) + i["ml"]
+        if i["eur_per_ml"] is not None:
+            eur = (eur or 0.0) + i["ml"] * i["eur_per_ml"]
     trocken = p["trocken_g"]
     total_ml = sum(fert.values())
     kwh = _kwh_share(conn, plant_id)

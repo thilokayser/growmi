@@ -85,22 +85,30 @@ def home(request: Request, conn=Depends(get_conn)):
                   phase_suggestion=phase_link.suggestion(conn, request.app.state.ha, date.today()), back="/")
 
 
-def _giessen_ctx(conn, form=None, error=None, checked=None):
+def _giessen_ctx(conn, form=None, error=None, typed=None):
     box = jobs.last_box_phase(conn) or "Wachstum"
     form = dict(form or {})
-    last = conn.execute("SELECT liters FROM watering ORDER BY ts DESC, id DESC LIMIT 1").fetchone()
-    if last and not form.get("liters"):  # watering is mostly the same amount: start from the last one
-        form["liters"] = f"{last['liters']:g}"
     recipes = {ph: watering.get_recipe(conn, ph) for ph in plants.BOX_PHASES}
     plist = occupied_now(conn)
     current = {p["id"] for p in plist}
     others = [p for p in conn.execute("SELECT id, slot, sorte FROM plant ORDER BY id DESC") if p["id"] not in current]
     plan = watering.current_recipe(conn, date.today())
     plan = plan if plan["source"] == "plan" else None
-    return {"plants": plist, "others": others, "recipes": recipes, "plan": plan,
+    # a plant is mostly watered the same amount: start from its last one (or what was just typed)
+    amounts = {r["plant_id"]: f"{r['liters']:g}" for r in conn.execute(
+        "SELECT wp.plant_id, wp.liters FROM watering_plant wp JOIN watering w ON w.id=wp.watering_id"
+        " ORDER BY w.ts, w.id")}
+    amounts.update(typed or {})
+    ferts = conn.execute("SELECT id, produkt FROM fertilizer ORDER BY produkt").fetchall()
+    # ml per litre of every recipe choice, for the form to pre-fill the fertilizer fields
+    mix = {ph: {i.fertilizer_id: i.ml_per_l for i in items} for ph, items in recipes.items()}
+    mix["wasser"] = {}
+    if plan:
+        mix["plan"] = dict(plan["items"])
+    return {"ferts": ferts, "mix": mix, "plants": plist, "others": others, "recipes": recipes, "plan": plan,
             "default_rezept": form.get("rezept") or ("plan" if plan else box),
             "form": form, "error": error, "ts": form.get("ts") or plants.now_ts(),
-            "checked": checked if checked is not None else [p["id"] for p in plist]}
+            "amounts": amounts, "typed": typed or {}}
 
 
 @router.get("/giessen")
@@ -109,20 +117,25 @@ def giessen_form(request: Request, conn=Depends(get_conn)):
 
 
 @router.post("/giessen")
-def giessen_post(request: Request, liters: str = Form(""), rezept: str = Form("wasser"),
-                 ph: str = Form(""), ec: str = Form(""), ts: str = Form(""),
-                 plant_ids: list[int] = Form(default=[]), conn=Depends(get_conn)):
-    form = {"liters": liters, "rezept": rezept, "ph": ph, "ec": ec, "ts": ts}
+async def giessen_post(request: Request, rezept: str = Form("wasser"),
+                       ph: str = Form(""), ec: str = Form(""), ts: str = Form(""), conn=Depends(get_conn)):
+    data = await request.form()
+    typed = {int(k[7:]): str(v) for k, v in data.items() if k.startswith("liters_") and k[7:].isdigit()}
+    ml_typed = {tuple(map(int, k[3:].split("_"))): str(v) for k, v in data.items()
+                if k.startswith("ml_") and k[3:].replace("_", "").isdigit() and k.count("_") == 2}
+    form = {"rezept": rezept, "ph": ph, "ec": ec, "ts": ts, "ml": {f"{p}_{f}": v for (p, f), v in ml_typed.items()}}
     try:
-        if not plant_ids:
-            raise ValueError(tr("Bitte mindestens eine Pflanze auswählen"))
-        items = watering.items_for(conn, rezept, date.today())
-        watering.add_watering(conn, ts=plants.norm_ts(ts), liters=plants.parse_decimal(liters),
-                              items=items, plant_ids=plant_ids,
+        amounts = {pid: plants.parse_decimal(v) for pid, v in typed.items() if v.strip()}
+        if not amounts:
+            raise ValueError(tr("Bitte bei mindestens einer Pflanze Liter eintragen"))
+        plant_ml = {pid: {fid: plants.parse_decimal(v, allow_zero=True) for (p, fid), v in ml_typed.items()
+                          if p == pid and v.strip()} for pid in amounts}
+        watering.add_watering(conn, ts=plants.norm_ts(ts), liters=0, plant_liters=amounts,
+                              items=[], plant_ml=plant_ml,
                               ph=plants.parse_decimal(ph) if ph.strip() else None,
                               ec=plants.parse_decimal(ec) if ec.strip() else None)
     except ValueError as e:
-        return render(request, "giessen.html", 400, **_giessen_ctx(conn, form, str(e), plant_ids))
+        return render(request, "giessen.html", 400, **_giessen_ctx(conn, form, str(e), typed))
     return redirect(request)
 
 

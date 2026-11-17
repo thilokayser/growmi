@@ -3,7 +3,7 @@ import json
 import os
 import sqlite3
 
-from . import config, snapshot
+from . import config, db, snapshot
 from .snapshot import KV_KEYS, TABLES
 from .i18n import tr
 
@@ -46,6 +46,7 @@ def apply(conn, db_path: str, parsed: dict) -> dict[str, int]:
                              [row[k] for k in keys])
         for key, value in parsed["kv"].items():
             conn.execute("INSERT INTO kv(k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v", (key, value))
+        db.backfill_shares(conn)
         if conn.execute("PRAGMA foreign_key_check").fetchone():
             raise ValueError(tr("Die Sicherung ist in sich nicht stimmig (Verweise ins Leere)"))
         conn.commit()

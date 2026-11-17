@@ -80,7 +80,15 @@ def get_recipe(conn, box_phase: str) -> list[RecipeItem]:
 
 def add_watering(conn, *, ts: str, liters: float, items: list[tuple[int, float]],
                  plant_ids: list[int] | None = None, ph: float | None = None,
-                 ec: float | None = None) -> int:
+                 ec: float | None = None, plant_liters: dict[int, float] | None = None,
+                 plant_ml: dict[int, dict[int, float]] | None = None) -> int:
+    """`plant_liters` (plant id -> litres) records an amount per plant, otherwise `liters` is split equally.
+    `plant_ml` (plant id -> fertilizer id -> ml) records the fertilizer per plant, otherwise `items`
+    (fertilizer id, ml per litre) are applied to each plant's litres."""
+    if plant_liters is not None:
+        if any(v <= 0 for v in plant_liters.values()):
+            raise ValueError(tr("Liter müssen größer als 0 sein"))
+        plant_ids, liters = list(plant_liters), sum(plant_liters.values())
     if liters <= 0:
         raise ValueError(tr("Liter müssen größer als 0 sein"))
     if plant_ids is None:
@@ -89,15 +97,31 @@ def add_watering(conn, *, ts: str, liters: float, items: list[tuple[int, float]]
         raise ValueError(tr("Keine Pflanze ausgewählt"))
     plant_ids = sorted(set(plant_ids))
     plants.require_plants(conn, plant_ids)
+    plant_liters = plant_liters or {pid: liters / len(plant_ids) for pid in plant_ids}
+    if plant_ml is None:
+        plant_ml = {pid: {fid: per_l * plant_liters[pid] for fid, per_l in items} for pid in plant_ids}
+    by_fert: dict[int, dict[int, float]] = {}  # fertilizer id -> plant id -> ml
+    for pid, amounts in plant_ml.items():
+        for fid, ml in amounts.items():
+            if ml < 0:
+                raise ValueError(tr("Düngermenge darf nicht negativ sein"))
+            if ml > 0:
+                by_fert.setdefault(fid, {})[pid] = ml
+    known = {r[0] for r in conn.execute("SELECT id FROM fertilizer")}
+    if any(fid not in known for fid in by_fert):
+        raise ValueError(tr("Unbekannter Dünger"))
     cur = conn.execute("INSERT INTO watering(ts, liters, ph, ec) VALUES (?,?,?,?)", (ts, liters, ph, ec))
     wid = cur.lastrowid
-    conn.executemany("INSERT INTO watering_plant(watering_id, plant_id) VALUES (?,?)",
-                     [(wid, pid) for pid in plant_ids])
-    for fid, ml_per_l in items:
+    conn.executemany("INSERT INTO watering_plant(watering_id, plant_id, liters) VALUES (?,?,?)",
+                     [(wid, pid, plant_liters[pid]) for pid in plant_ids])
+    for fid, per_plant in by_fert.items():
         f = conn.execute("SELECT produkt, hersteller, preis_eur, flasche_ml FROM fertilizer WHERE id=?", (fid,)).fetchone()
         eur_per_ml = f["preis_eur"] / f["flasche_ml"] if f["preis_eur"] and f["flasche_ml"] else None
-        conn.execute("INSERT INTO watering_item(watering_id, produkt, hersteller, ml_per_l, ml_total, eur_per_ml)"
-                     " VALUES (?,?,?,?,?,?)", (wid, f["produkt"], f["hersteller"], ml_per_l, ml_per_l * liters, eur_per_ml))
+        total = sum(per_plant.values())
+        cur = conn.execute("INSERT INTO watering_item(watering_id, produkt, hersteller, ml_per_l, ml_total, eur_per_ml)"
+                           " VALUES (?,?,?,?,?,?)", (wid, f["produkt"], f["hersteller"], total / liters, total, eur_per_ml))
+        conn.executemany("INSERT INTO watering_item_plant(item_id, plant_id, ml) VALUES (?,?,?)",
+                         [(cur.lastrowid, pid, ml) for pid, ml in per_plant.items()])
     conn.commit()
     return wid
 

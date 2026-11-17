@@ -5,9 +5,8 @@
 <h1>{{ icon('droplet') }} Gießen</h1>
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 <form method="post" action="{{ root }}/giessen">
-  <label><span>Liter <span class="req" aria-hidden="true">*</span></span><input name="liters" inputmode="decimal" autofocus required value="{{ form.liters or '' }}"></label>
   <label>Rezept
-    <select name="rezept">
+    <select name="rezept" id="rezept">
       {% if plan %}<option value="plan" {{ 'selected' if default_rezept == 'plan' }}>{{ plan.label }}</option>{% endif %}
       {% for ph, items in recipes.items() %}
       <option value="{{ ph }}" {{ 'selected' if ph == default_rezept }}>{{ tr(ph) }}{% if items %} ({% for i in items %}{{ i.produkt }} {{ '%g' % i.ml_per_l }} ml/L{{ ', ' if not loop.last }}{% endfor %}){% else %} (kein Rezept){% endif %}</option>
@@ -18,18 +17,48 @@
   <label>pH (optional) <input name="ph" inputmode="decimal" value="{{ form.ph or '' }}"></label>
   <label>EC (optional) <input name="ec" inputmode="decimal" value="{{ form.ec or '' }}"></label>
   <label>Zeit <input type="datetime-local" name="ts" value="{{ ts }}"></label>
-  <fieldset><legend>Pflanzen</legend>
+  {% macro plant_fields(p, suffix, show) %}
+    <div class="plant-water" data-plant="{{ p.id }}">
+      <label>Platz {{ p.slot }} · {{ p.sorte }}{{ ' ' ~ suffix if suffix }} <input name="liters_{{ p.id }}" inputmode="decimal" placeholder="L" value="{{ show }}"></label>
+      {% for f in ferts %}
+      <label>{{ f.produkt }} (ml) <input name="ml_{{ p.id }}_{{ f.id }}" data-fert="{{ f.id }}" inputmode="decimal" value="{{ form.ml.get(p.id ~ '_' ~ f.id, '') if form.ml else '' }}"></label>
+      {% endfor %}
+    </div>
+  {% endmacro %}
+  <fieldset><legend>Pro Pflanze: Liter (leer = nicht gegossen) und Dünger in ml</legend>
     {% for p in plants %}
-    <label class="check"><input type="checkbox" name="plant_ids" value="{{ p.id }}" {{ 'checked' if p.id in checked }}> Platz {{ p.slot }} · {{ p.sorte }}</label>
+    {{ plant_fields(p, '', amounts.get(p.id, '')) }}
     {% else %}<p>Kein Platz belegt.</p>{% endfor %}
   </fieldset>
   {% if others %}
   <details><summary>Weitere Pflanzen (ausgezogen, für nachträgliche Einträge)</summary>
     {% for p in others %}
-    <label class="check"><input type="checkbox" name="plant_ids" value="{{ p.id }}" {{ 'checked' if p.id in checked }}> Platz {{ p.slot }} · {{ p.sorte }} (ausgezogen)</label>
+    {{ plant_fields(p, tr('(ausgezogen)'), amounts.get(p.id, '') if p.id in typed else '') }}
     {% endfor %}
   </details>
   {% endif %}
   <button class="btn">Speichern</button>
 </form>
+<script>
+(function () {
+  var mix = {{ mix | tojson }}, sel = document.getElementById("rezept");
+  var rows = document.querySelectorAll(".plant-water");
+  function fill(row) {  // recipe x litres, unless the amount was typed by hand
+    var l = parseFloat(row.querySelector("[name^=liters_]").value.replace(",", ".")), m = mix[sel.value] || {};
+    row.querySelectorAll("[data-fert]").forEach(function (i) {
+      if (i.dataset.touched) return;
+      i.value = l > 0 && m[i.dataset.fert] ? (Math.round(m[i.dataset.fert] * l * 10) / 10) : "";
+    });
+  }
+  rows.forEach(function (row) {
+    row.querySelectorAll("[data-fert]").forEach(function (i) {
+      if (i.value) i.dataset.touched = "1";
+      i.addEventListener("input", function () { i.dataset.touched = "1"; });
+    });
+    row.querySelector("[name^=liters_]").addEventListener("input", function () { fill(row); });
+    fill(row);
+  });
+  sel.addEventListener("change", function () { rows.forEach(fill); });
+})();
+</script>
 {% endblock %}

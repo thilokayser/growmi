@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 TABLES = ["plant", "plant_phase", "fertilizer", "recipe_item", "strain", "watering", "watering_plant",
-          "watering_item", "intervention", "photo", "box_phase_change", "climate_day", "box_event", "task", "recipe_week", "recipe_week_flag", "device_day", "wear", "climate_hour"]
+          "watering_item", "watering_item_plant", "intervention", "photo", "box_phase_change", "climate_day", "box_event", "task", "recipe_week", "recipe_week_flag", "device_day", "wear", "climate_hour"]
 
 
 DEFAULT_DIR, LATEST = "/share/growmi", "growmi-latest.json"

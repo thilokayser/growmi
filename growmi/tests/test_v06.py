@@ -65,7 +65,7 @@ def test_export_json_and_csv(web):
 
 def test_giessen_prefills_last_liters(web):
     pid = seed_plant(web, 1)
-    web.client.post("/giessen", data={"liters": "3,5", "rezept": "wasser", "plant_ids": [pid]})
+    web.client.post("/giessen", data={f"liters_{pid}": "3,5", "rezept": "wasser"})
     assert 'value="3.5"' in web.client.get("/giessen").text
 
 

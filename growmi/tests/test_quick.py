@@ -28,7 +28,7 @@ def test_platz_redirects_to_current_plant_or_planting(web):
 
 def test_quick_page_has_the_big_actions(web):
     a, b = two(web)
-    web.client.post("/giessen", data={"liters": "3,5", "rezept": "wasser", "plant_ids": [a, b]})
+    web.client.post("/giessen", data={f"liters_{a}": "3,5", f"liters_{b}": "2", "rezept": "wasser"})
     t = web.client.get(f"/pflanze/{a}/schnell").text
     assert "Alpha" in t and 'value="3.5"' in t
     assert 'capture="environment"' in t and 'action="/foto"' in t and f'action="/pflanze/{a}/notiz"' in t
@@ -52,7 +52,7 @@ def test_quick_watering_uses_recipe_and_rejects_bad_liters(web):
     c.close()
     web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "3", "rezept": "Wachstum", "scope": "all"})
     c = web.conn()
-    assert c.execute("SELECT ml_total FROM watering_item").fetchone()[0] == 6.0
+    assert c.execute("SELECT ml_total FROM watering_item").fetchone()[0] == 12.0  # 3 L per plant, two plants
     c.close()
     r = web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "0", "rezept": "wasser", "scope": "all"})
     assert r.status_code == 400 and count(web, "watering") == 1

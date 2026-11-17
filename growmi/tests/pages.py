@@ -2,7 +2,7 @@
 import re
 from datetime import datetime, timedelta
 
-from app import plants, tasks
+from app import db, plants, tasks
 
 NOW = datetime.now()
 
@@ -28,6 +28,7 @@ def populate(web) -> list[int]:
         for pid in ids:
             c.execute("INSERT INTO watering_plant(watering_id, plant_id) VALUES (?,?)", (d + 1, pid))
         c.execute("INSERT INTO watering_item(watering_id, produkt, hersteller, ml_per_l, ml_total, eur_per_ml) VALUES (?,'Compo','Compo',2,6,0.01)", (d + 1,))
+    db.backfill_shares(c)
     c.execute("INSERT INTO intervention(ts, plant_id, art, text, tag) VALUES (?,?,'Topping','oben','Stress')", (NOW.strftime("%Y-%m-%dT10:00"), ids[0]))
     c.execute("INSERT INTO photo(ts, plant_id, filename) VALUES (?,?,'x.jpg')", (NOW.strftime("%Y-%m-%dT10:00"), ids[0]))
     c.execute("INSERT INTO box_event(ts, kind, text) VALUES (?,'hitze','Hitze: 30.1 °C')", (NOW.strftime("%Y-%m-%dT10:00"),))

@@ -21,7 +21,7 @@
 <section class="quick" aria-labelledby="q-giessen">
   <h2 id="q-giessen">Gießen</h2>
   <form method="post" action="{{ root }}/pflanze/{{ p.id }}/schnell/giessen">
-    <label><span>Liter <span class="req" aria-hidden="true">*</span></span><input name="liters" inputmode="decimal" required value="{{ liters }}"></label>
+    <label><span>Liter pro Pflanze <span class="req" aria-hidden="true">*</span></span><input name="liters" inputmode="decimal" required value="{{ liters }}"></label>
     <label>Rezept
       <select name="rezept">
         {% if plan %}<option value="plan" {{ 'selected' if rezept == 'plan' }}>{{ plan.label }}</option>{% endif %}

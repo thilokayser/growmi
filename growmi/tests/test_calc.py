@@ -71,3 +71,31 @@ def test_by_sorte_groups_same_strain_across_runs(conn):
     assert [r.sorte for r in rows] == ["Amnesia Haze", "Blue Dream"]
     assert [t.plant_id for t in rows[0].plants] == [a, b]
     assert [t.plant_id for t in rows[1].plants] == [c]
+
+
+def test_amounts_per_plant(conn):
+    a, b = plant(conn, 1), plant(conn, 2)
+    f = watering.add_fertilizer(conn, "Bloom", "BB", preis_eur=10, flasche_ml=1000)
+    wid = watering.add_watering(conn, ts="2026-10-20T12:00", liters=0, items=[], plant_liters={a: 1.0, b: 3.0},
+                                plant_ml={a: {f: 2.0}, b: {f: 5.0}})
+    ta, tb = calc.plant_totals(conn, a), calc.plant_totals(conn, b)
+    assert (ta.water_l, tb.water_l) == (1.0, 3.0)
+    assert (ta.fert_ml, tb.fert_ml) == ({"Bloom": 2.0}, {"Bloom": 5.0})
+    row = conn.execute("SELECT liters FROM watering").fetchone()
+    item = conn.execute("SELECT ml_total, ml_per_l FROM watering_item").fetchone()
+    assert (row[0], item[0], item[1]) == (4.0, 7.0, 7.0 / 4.0)
+    # editing the total keeps each plant's share
+    from app import entries
+    entries.update_entry(conn, "watering", wid, liters=8.0)
+    assert calc.plant_totals(conn, a).water_l == 2.0 and calc.plant_totals(conn, b).fert_ml == {"Bloom": 10.0}
+
+
+def test_old_equal_split_is_backfilled(conn):
+    a, b = plant(conn, 1), plant(conn, 2)
+    conn.execute("INSERT INTO watering(ts, liters) VALUES ('2026-10-20T12:00', 4.0)")
+    conn.executemany("INSERT INTO watering_plant(watering_id, plant_id) VALUES (1, ?)", [(a,), (b,)])
+    conn.execute("INSERT INTO watering_item(watering_id, produkt, hersteller, ml_per_l, ml_total) VALUES (1,'X','',2,8)")
+    from app import db
+    db.backfill_shares(conn)
+    db.backfill_shares(conn)  # runs on every start: must not double the rows
+    assert calc.plant_totals(conn, a).water_l == 2.0 and calc.plant_totals(conn, b).fert_ml == {"X": 4.0}

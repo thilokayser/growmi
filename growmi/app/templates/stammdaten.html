@@ -33,7 +33,7 @@
   <tr>
     <td>{% if f.filename %}<a href="{{ root }}/fotos/{{ f.filename }}"><img class="fert-thumb" src="{{ root }}/fotos/t_{{ f.filename }}" width="56" height="56" loading="lazy" alt="Foto von {{ f.produkt }}"></a>{% endif %}</td>
     <td>{{ f.produkt }}<br><span class="muted">{{ f.hersteller }}</span></td>
-    <td class="num">{% if f|npk %}NPK {{ f|npk }}{% endif %}{% set s = stocks[f.id] %}{% if s %}<br><span class="muted">Rest ca. {{ '%.0f' % s.rest_ml }} ml{% if s.gaenge is not none %} · {{ '%.1f' % s.gaenge }} Gießgänge{% endif %}</span>{% endif %}{% if f.preis_eur and f.flasche_ml %}<br><span class="muted">{{ '%g' % f.preis_eur }} € / {{ '%g' % f.flasche_ml }} ml</span>{% endif %}</td>
+    <td class="num">{% if f|npk %}NPK {{ f|npk }}{% endif %}{% set s = stocks[f.id] %}{% if s %}<br><span class="muted">Rest ca. {{ '%.0f' % s.rest_ml }} ml{% if s.gaenge is not none %} · {{ '%.1f' % s.gaenge }} Gießgänge{% endif %}{% if s.per_week is not none %} · {{ '%.0f' % s.per_week }} ml pro Woche, reicht ca. {{ '%.0f' % s.tage }} Tage{% endif %}</span>{% endif %}{% if f.preis_eur and f.flasche_ml %}<br><span class="muted">{{ '%g' % f.preis_eur }} € / {{ '%g' % f.flasche_ml }} ml</span>{% endif %}</td>
     <td><div class="row-actions">
       <a class="icon-btn" href="{{ root }}/stammdaten/duenger/{{ f.id }}" aria-label="Dünger bearbeiten">{{ icon('pencil') }}</a>
       <form class="inline-form" method="post" action="{{ root }}/stammdaten/duenger/{{ f.id }}/loeschen" onsubmit='return confirm({{ tr("Wirklich löschen?")|tojson }})'><button class="icon-btn danger-icon" aria-label="Dünger löschen">{{ icon('trash') }}</button></form>

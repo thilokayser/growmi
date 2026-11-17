@@ -8,7 +8,7 @@
 <table>
   {% for s in items %}
   <tr><td><b>{{ s.produkt }}</b><br><span class="muted">{{ s.hersteller }}</span></td>
-    <td class="num">Rest ca. {{ '%.0f' % s.rest_ml }} ml{% if s.gaenge is not none %}<br><span class="muted">{{ '%.1f' % s.gaenge }} Gießgänge</span>{% endif %}</td>
+    <td class="num">Rest ca. {{ '%.0f' % s.rest_ml }} ml{% if s.gaenge is not none %}<br><span class="muted">{{ '%.1f' % s.gaenge }} Gießgänge{% if s.tage is not none %} · ca. {{ '%.0f' % s.tage }} Tage{% endif %}</span>{% endif %}</td>
     <td class="num">{% if s.preis %}{{ '%g' % s.preis }} €{% if s.flasche_ml %}<br><span class="muted">{{ '%g' % s.flasche_ml }} ml</span>{% endif %}{% else %}–{% endif %}</td>
     <td><form class="inline-form" method="post" action="{{ root }}/stammdaten/duenger/{{ s.id }}/flasche"><button class="btn">Neue Flasche gekauft</button></form></td></tr>
   {% endfor %}

@@ -8,7 +8,7 @@ FOLLOW_UP_TAGS = ("Mangel", "Schädling")
 FOLLOW_UP_DAYS = 5
 ARTEN = ("Notiz", "Topping", "LST", "Umtopfen", "Schädling", "Sonstiges")
 TABLES = {"watering": "watering", "intervention": "intervention", "photo": "photo"}
-EDITABLE = {"watering": {"ts", "liters", "ph", "ec"},
+EDITABLE = {"watering": {"ts", "ph", "ec"},
             "intervention": {"ts", "art", "text", "plant_id"},
             "photo": {"ts"}}
 
@@ -43,20 +43,9 @@ def update_entry(conn, kind: str, entry_id: int, **fields) -> None:
         raise ValueError(tr("Nicht änderbar: {bad}", bad=sorted(bad)))
     if kind == "intervention" and "art" in fields and fields["art"] not in ARTEN:
         raise ValueError(tr("Unbekannte Art: {art!r}", art=fields["art"]))
-    if "liters" in fields and fields["liters"] <= 0:
-        raise ValueError(tr("Liter müssen größer als 0 sein"))
-    if "liters" in fields:  # keep every plant's share of the new total, litres and fertilizer
-        conn.execute("UPDATE watering_item_plant SET ml=ml*?/(SELECT liters FROM watering WHERE id=?)"
-                     " WHERE item_id IN (SELECT id FROM watering_item WHERE watering_id=?)",
-                     (fields["liters"], entry_id, entry_id))
-        conn.execute("UPDATE watering_plant SET liters=liters*?/(SELECT liters FROM watering WHERE id=?) WHERE watering_id=?",
-                     (fields["liters"], entry_id, entry_id))
     if fields:
         sets = ", ".join(f"{k}=?" for k in fields)
         conn.execute(f"UPDATE {TABLES[kind]} SET {sets} WHERE id=?", (*fields.values(), entry_id))
-    if "liters" in fields:
-        conn.execute("UPDATE watering_item SET ml_total=ml_per_l*? WHERE watering_id=?",
-                     (fields["liters"], entry_id))
     conn.commit()
 
 
@@ -88,18 +77,3 @@ def list_entries(conn, plant_id: int | None = None) -> list[dict]:
     if plant_id is not None:
         out = [e for e in out if plant_id in e["plant_ids"]]
     return sorted(out, key=lambda e: e["ts"], reverse=True)
-
-
-def set_watering_plants(conn, watering_id: int, plant_ids: list[int]) -> None:
-    if not plant_ids:
-        raise ValueError(tr("Mindestens eine Pflanze auswählen"))
-    total = conn.execute("SELECT liters FROM watering WHERE id=?", (watering_id,)).fetchone()["liters"]
-    ids = sorted(set(plant_ids))
-    conn.execute("DELETE FROM watering_plant WHERE watering_id=?", (watering_id,))
-    conn.executemany("INSERT INTO watering_plant(watering_id, plant_id, liters) VALUES (?,?,?)",
-                     [(watering_id, pid, total / len(ids)) for pid in ids])
-    for item in conn.execute("SELECT id, ml_total FROM watering_item WHERE watering_id=?", (watering_id,)).fetchall():
-        conn.execute("DELETE FROM watering_item_plant WHERE item_id=?", (item["id"],))
-        conn.executemany("INSERT INTO watering_item_plant(item_id, plant_id, ml) VALUES (?,?,?)",
-                         [(item["id"], pid, item["ml_total"] / len(ids)) for pid in ids])
-    conn.commit()

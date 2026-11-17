@@ -100,7 +100,16 @@ def add_watering(conn, *, ts: str, liters: float, items: list[tuple[int, float]]
     plant_liters = plant_liters or {pid: liters / len(plant_ids) for pid in plant_ids}
     if plant_ml is None:
         plant_ml = {pid: {fid: per_l * plant_liters[pid] for fid, per_l in items} for pid in plant_ids}
-    by_fert: dict[int, dict[int, float]] = {}  # fertilizer id -> plant id -> ml
+    by_fert = _by_fert(conn, plant_ml)
+    cur = conn.execute("INSERT INTO watering(ts, liters, ph, ec) VALUES (?,?,?,?)", (ts, liters, ph, ec))
+    _store(conn, cur.lastrowid, liters, plant_liters, by_fert, {})
+    conn.commit()
+    return cur.lastrowid
+
+
+def _by_fert(conn, plant_ml: dict[int, dict[int, float]]) -> dict[int, dict[int, float]]:
+    """plant -> fertilizer -> ml turned into fertilizer -> plant -> ml, validated, zeros dropped."""
+    by_fert: dict[int, dict[int, float]] = {}
     for pid, amounts in plant_ml.items():
         for fid, ml in amounts.items():
             if ml < 0:
@@ -110,20 +119,56 @@ def add_watering(conn, *, ts: str, liters: float, items: list[tuple[int, float]]
     known = {r[0] for r in conn.execute("SELECT id FROM fertilizer")}
     if any(fid not in known for fid in by_fert):
         raise ValueError(tr("Unbekannter Dünger"))
-    cur = conn.execute("INSERT INTO watering(ts, liters, ph, ec) VALUES (?,?,?,?)", (ts, liters, ph, ec))
-    wid = cur.lastrowid
+    return by_fert
+
+
+def _store(conn, wid, liters, plant_liters, by_fert, snapshots) -> None:
+    """Writes the per-plant litres and fertilizer of a watering; `snapshots` keeps the price of items edited later."""
     conn.executemany("INSERT INTO watering_plant(watering_id, plant_id, liters) VALUES (?,?,?)",
-                     [(wid, pid, plant_liters[pid]) for pid in plant_ids])
+                     [(wid, pid, l) for pid, l in plant_liters.items()])
     for fid, per_plant in by_fert.items():
         f = conn.execute("SELECT produkt, hersteller, preis_eur, flasche_ml FROM fertilizer WHERE id=?", (fid,)).fetchone()
-        eur_per_ml = f["preis_eur"] / f["flasche_ml"] if f["preis_eur"] and f["flasche_ml"] else None
+        eur_per_ml = snapshots.get((f["produkt"], f["hersteller"]),
+                                   f["preis_eur"] / f["flasche_ml"] if f["preis_eur"] and f["flasche_ml"] else None)
         total = sum(per_plant.values())
         cur = conn.execute("INSERT INTO watering_item(watering_id, produkt, hersteller, ml_per_l, ml_total, eur_per_ml)"
                            " VALUES (?,?,?,?,?,?)", (wid, f["produkt"], f["hersteller"], total / liters, total, eur_per_ml))
         conn.executemany("INSERT INTO watering_item_plant(item_id, plant_id, ml) VALUES (?,?,?)",
                          [(cur.lastrowid, pid, ml) for pid, ml in per_plant.items()])
+
+
+def raw_amounts(data) -> tuple[dict[int, str], dict[tuple[int, int], str]]:
+    """Form fields liters_<plant> and ml_<plant>_<fertilizer> as typed (to show again after an error)."""
+    liters = {int(k[7:]): str(v) for k, v in data.items() if k.startswith("liters_") and k[7:].isdigit()}
+    ml = {tuple(map(int, k[3:].split("_"))): str(v) for k, v in data.items()
+          if k.startswith("ml_") and k.count("_") == 2 and k[3:].replace("_", "").isdigit()}
+    return liters, ml
+
+
+def parse_amounts(liters: dict[int, str], ml: dict[tuple[int, int], str]):
+    """Typed text to numbers: litres per watered plant (empty = not watered) and ml per plant and fertilizer."""
+    amounts = {pid: plants.parse_decimal(v) for pid, v in liters.items() if v.strip()}
+    if not amounts:
+        raise ValueError(tr("Bitte bei mindestens einer Pflanze Liter eintragen"))
+    plant_ml = {pid: {fid: plants.parse_decimal(v, allow_zero=True) for (p, fid), v in ml.items() if p == pid and v.strip()}
+                for pid in amounts}
+    return amounts, plant_ml
+
+
+def replace_amounts(conn, wid: int, plant_liters: dict[int, float], plant_ml: dict[int, dict[int, float]]) -> None:
+    """Edit of a watering: new litres and fertilizer per plant; the prices recorded then stay."""
+    if not plant_liters or any(v <= 0 for v in plant_liters.values()):
+        raise ValueError(tr("Liter müssen größer als 0 sein"))
+    plants.require_plants(conn, list(plant_liters))
+    by_fert = _by_fert(conn, {p: m for p, m in plant_ml.items() if p in plant_liters})
+    snapshots = {(r["produkt"], r["hersteller"]): r["eur_per_ml"]
+                 for r in conn.execute("SELECT produkt, hersteller, eur_per_ml FROM watering_item WHERE watering_id=?", (wid,))}
+    conn.execute("DELETE FROM watering_plant WHERE watering_id=?", (wid,))
+    conn.execute("DELETE FROM watering_item WHERE watering_id=?", (wid,))
+    liters = sum(plant_liters.values())
+    conn.execute("UPDATE watering SET liters=? WHERE id=?", (liters, wid))
+    _store(conn, wid, liters, plant_liters, by_fert, snapshots)
     conn.commit()
-    return wid
 
 
 def set_week_plan(conn, box_phase: str, week: int, items: list[tuple[int, float]], water_only: bool) -> None:

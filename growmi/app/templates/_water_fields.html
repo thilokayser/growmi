@@ -1,0 +1,8 @@
+{% macro plant_fields(p, suffix, show) %}
+    <div class="plant-water" data-plant="{{ p.id }}" {{ "data-removed" if suffix }}>
+      <label>Platz {{ p.slot }} · {{ p.sorte }}{{ ' ' ~ suffix if suffix }} <input name="liters_{{ p.id }}" inputmode="decimal" placeholder="L" value="{{ show }}"></label>
+      {% for f in ferts %}
+      <label>{{ f.produkt }} (ml) <input name="ml_{{ p.id }}_{{ f.id }}" data-fert="{{ f.id }}" inputmode="decimal" value="{{ form.ml.get(p.id ~ '_' ~ f.id, '') if form.ml else '' }}"></label>
+      {% endfor %}
+    </div>
+{% endmacro %}

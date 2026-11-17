@@ -29,7 +29,7 @@
       <span class="chip ph-{{ c.phase }}">{{ tr(c.phase) }}</span>{% if c.plant.typ %}<small>{{ c.plant.typ|typ }}</small>{% endif %}
       <small class="num">Tag {{ c.phase_day }} in dieser Phase</small>
       <small class="num">{{ c.water_ago }}</small>
-      <small class="num">Woche {{ c.week }} · {{ c.age_days }} Tage alt · {{ '%g' % c.water_l }} L</small>
+      <small class="num">Woche {{ c.week }} · {{ c.age_days }} Tage alt · {{ '%g' % (c.water_l|round(1)) }} L</small>
     </a>
     {% else %}
     <a class="slot free" data-slot="{{ c.slot }}" data-pos="{{ c.pos }}" style="grid-row:{{ c.row }};grid-column:{{ c.col }}" href="{{ root }}/pflanze/neu?slot={{ c.slot }}">

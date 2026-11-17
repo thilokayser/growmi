@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "icons.html" import icon %}
+{% from "_water_fields.html" import plant_fields with context %}
 {% block title %}Gießen{% endblock %}
 {% block content %}
 <h1>{{ icon('droplet') }} Gießen</h1>
@@ -17,15 +18,8 @@
   <label>pH (optional) <input name="ph" inputmode="decimal" value="{{ form.ph or '' }}"></label>
   <label>EC (optional) <input name="ec" inputmode="decimal" value="{{ form.ec or '' }}"></label>
   <label>Zeit <input type="datetime-local" name="ts" value="{{ ts }}"></label>
-  {% macro plant_fields(p, suffix, show) %}
-    <div class="plant-water" data-plant="{{ p.id }}">
-      <label>Platz {{ p.slot }} · {{ p.sorte }}{{ ' ' ~ suffix if suffix }} <input name="liters_{{ p.id }}" inputmode="decimal" placeholder="L" value="{{ show }}"></label>
-      {% for f in ferts %}
-      <label>{{ f.produkt }} (ml) <input name="ml_{{ p.id }}_{{ f.id }}" data-fert="{{ f.id }}" inputmode="decimal" value="{{ form.ml.get(p.id ~ '_' ~ f.id, '') if form.ml else '' }}"></label>
-      {% endfor %}
-    </div>
-  {% endmacro %}
   <fieldset><legend>Pro Pflanze: Liter (leer = nicht gegossen) und Dünger in ml</legend>
+    {% if plants|length > 1 %}<label>Alle Pflanzen im Zelt: Liter <input id="all-liters" inputmode="decimal" placeholder="L"></label>{% endif %}
     {% for p in plants %}
     {{ plant_fields(p, '', amounts.get(p.id, '')) }}
     {% else %}<p>Kein Platz belegt.</p>{% endfor %}
@@ -59,6 +53,12 @@
     fill(row);
   });
   sel.addEventListener("change", function () { rows.forEach(fill); });
+  var all = document.getElementById("all-liters");  // one amount for every plant in the tent
+  if (all) all.addEventListener("input", function () {
+    document.querySelectorAll(".plant-water:not([data-removed]) [name^=liters_]").forEach(function (i) {
+      i.value = all.value; i.dispatchEvent(new Event("input"));
+    });
+  });
 })();
 </script>
 {% endblock %}

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.26.0
+- Editing a watering changes liters and fertilizer per plant (prices recorded then stay).
+- One field fills the liters of all plants at once.
+- Fertilizer stock shows the use per week and how many days the rest lasts.
+- The analysis and planning tables are fully translated; the plant card on the home page rounds the water amount.
+
 ## 0.25.0
 - Watering: enter liters and fertilizer (ml per product) for each plant instead of one amount split equally. The recipe pre-fills the ml fields (liters x ml/L) and you can overwrite them. The plant page and the analysis use each plant's own amounts, the stock count uses the sum.
 - The quick page now takes liters per plant ("all plants" gives each plant that amount).

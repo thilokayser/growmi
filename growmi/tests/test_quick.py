@@ -112,3 +112,8 @@ def test_kiosk_toggle_buttons(web):
     assert 'href="/kiosk"' in web.client.get("/cockpit").text
     t = web.client.get("/kiosk").text
     assert 'aria-label="Anzeige-Modus beenden"' in t and 'href="/"' in t
+
+
+def test_giessen_offers_one_amount_for_all_plants(web):
+    two(web)
+    assert 'id="all-liters"' in web.client.get("/giessen").text

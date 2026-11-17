@@ -37,6 +37,19 @@ def test_stock_rest_gaenge_and_low_flag(conn):
     assert [x["produkt"] for x in stock.low_items(conn)] == ["Grow"]
 
 
+def test_stock_days_left_from_recent_use(conn):
+    mk(conn)
+    f = watering.add_fertilizer(conn, "Grow", "Compo", preis_eur=20.0, flasche_ml=500.0)
+    start = datetime.now() - timedelta(days=10)
+    stock.set_stock(conn, f, 500.0, start.strftime("%Y-%m-%dT%H:%M"))
+    for d in (1, 4, 7):  # 20 ml each, 60 ml in 10 days
+        water(conn, (start + timedelta(days=d)).strftime("%Y-%m-%dT%H:%M"), 4.0, [(f, 5.0)])
+    s = stock.status(conn, f)
+    assert s["per_week"] == pytest.approx(42, rel=0.01) and s["tage"] == pytest.approx(440 / 6, rel=0.01)
+    stock.set_stock(conn, f, 500.0)  # counted just now: too young for a forecast
+    assert stock.status(conn, f)["tage"] is None
+
+
 def test_stock_unknown_and_new_bottle(conn):
     f = watering.add_fertilizer(conn, "Bloom", "BB", flasche_ml=1000.0)
     assert stock.status(conn, f) is None

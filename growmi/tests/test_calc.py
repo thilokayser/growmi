@@ -84,10 +84,12 @@ def test_amounts_per_plant(conn):
     row = conn.execute("SELECT liters FROM watering").fetchone()
     item = conn.execute("SELECT ml_total, ml_per_l FROM watering_item").fetchone()
     assert (row[0], item[0], item[1]) == (4.0, 7.0, 7.0 / 4.0)
-    # editing the total keeps each plant's share
-    from app import entries
-    entries.update_entry(conn, "watering", wid, liters=8.0)
-    assert calc.plant_totals(conn, a).water_l == 2.0 and calc.plant_totals(conn, b).fert_ml == {"Bloom": 10.0}
+    # editing replaces the amounts but keeps the price recorded then
+    conn.execute("UPDATE fertilizer SET preis_eur=99 WHERE id=?", (f,))
+    watering.replace_amounts(conn, wid, {a: 2.0, b: 3.0}, {a: {f: 4.0}, b: {f: 5.0}})
+    assert calc.plant_totals(conn, a).water_l == 2.0 and calc.plant_totals(conn, b).fert_ml == {"Bloom": 5.0}
+    assert conn.execute("SELECT eur_per_ml FROM watering_item").fetchone()[0] == 0.01
+    assert conn.execute("SELECT liters FROM watering").fetchone()[0] == 5.0
 
 
 def test_old_equal_split_is_backfilled(conn):

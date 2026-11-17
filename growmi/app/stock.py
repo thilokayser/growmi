@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from .plants import now_ts
 from .i18n import tr
 
@@ -19,8 +21,19 @@ def status(conn, fertilizer_id: int) -> dict | None:
         "SELECT wi.ml_total FROM watering_item wi JOIN watering w ON w.id=wi.watering_id"
         " WHERE wi.produkt=? AND wi.hersteller=? ORDER BY w.ts DESC, w.id DESC LIMIT 5", (f["produkt"], f["hersteller"]))]
     rest = max(f["bestand_ml"] - used, 0.0)
+    # consumption of the last two weeks (or since the count, if that is younger) gives the days left
+    now = datetime.now()
+    since = max(datetime.fromisoformat(f["bestand_ab"]), now - timedelta(days=14))
+    days = (now - since).total_seconds() / 86400
+    recent_ml = conn.execute(
+        "SELECT COALESCE(SUM(wi.ml_total), 0) FROM watering_item wi JOIN watering w ON w.id=wi.watering_id"
+        " WHERE wi.produkt=? AND wi.hersteller=? AND w.ts >= ?",
+        (f["produkt"], f["hersteller"], since.strftime("%Y-%m-%dT%H:%M"))).fetchone()[0]
+    per_day = recent_ml / days if days >= 3 and recent_ml > 0 else None  # a shorter window says too little
+    tage = rest / per_day if per_day else None
     gaenge = rest / (sum(recent) / len(recent)) if recent and sum(recent) > 0 else None
     return {"id": f["id"], "produkt": f["produkt"], "hersteller": f["hersteller"], "rest_ml": rest, "gaenge": gaenge,
+            "per_week": per_day * 7 if per_day else None, "tage": tage,
             "low": rest <= 0 or (gaenge is not None and gaenge < 2), "preis": f["preis_eur"], "flasche_ml": f["flasche_ml"]}
 
 

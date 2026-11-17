@@ -50,7 +50,7 @@ TOKEN = re.compile(r"""
 LETTERS = re.compile(r"[A-Za-zÄÖÜäöüß]{2,}")
 # values that bring their own markup, or whitespace control, split the sentence instead of filling a placeholder
 BOUNDARY = re.compile(r"^\{\{-|-\}\}$|^\{\{\s*(icon|entity_field|_|caller)\s*\(|\|\s*safe\b")
-ATTR = re.compile(r'\b(aria-label|placeholder|title|alt)="([^"]*)"')
+ATTR = re.compile(r'\b(aria-label|placeholder|title|alt|data-label)="([^"]*)"')
 
 
 def _literal(msgid: str) -> str:

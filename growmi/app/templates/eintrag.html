@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_water_fields.html" import plant_fields with context %}
 {% block title %}Eintrag ändern{% endblock %}
 {% block content %}
 <h1>Eintrag ändern</h1>
@@ -7,13 +8,19 @@
   <input type="hidden" name="back" value="{{ back }}">
   <label>Zeit <input type="datetime-local" name="ts" value="{{ e.ts }}"></label>
   {% if kind == 'watering' %}
-  <label><span>Liter <span class="req" aria-hidden="true">*</span></span><input name="liters" inputmode="decimal" required value="{{ '%g' % e.liters }}"></label>
   <label>pH <input name="ph" inputmode="decimal" value="{{ e.ph if e.ph is not none else '' }}"></label>
   <label>EC <input name="ec" inputmode="decimal" value="{{ e.ec if e.ec is not none else '' }}"></label>
-  <fieldset><legend>Pflanzen</legend>
-    <input type="hidden" name="edit_plants" value="1">
-    {% for p in all_plants %}<label class="check"><input type="checkbox" name="plant_ids" value="{{ p.id }}" {{ 'checked' if p.id in checked }}> Platz {{ p.slot }} · {{ p.sorte }}{{ tr(' (ausgezogen)') if p.ausgezogen_am }}</label>{% endfor %}
+  <fieldset><legend>Pro Pflanze: Liter (leer = nicht gegossen) und Dünger in ml</legend>
+    {% for p in all_plants if not p.ausgezogen_am or p.id in typed %}
+    {{ plant_fields(p, tr('(ausgezogen)') if p.ausgezogen_am else '', amounts.get(p.id, '')) }}
+    {% endfor %}
   </fieldset>
+  {% set others = all_plants | selectattr('ausgezogen_am') | rejectattr('id', 'in', typed) | list %}
+  {% if others %}
+  <details><summary>Weitere Pflanzen (ausgezogen)</summary>
+    {% for p in others %}{{ plant_fields(p, tr('(ausgezogen)'), '') }}{% endfor %}
+  </details>
+  {% endif %}
   {% elif kind == 'intervention' %}
   <label>Art <select name="art">{% for a in arten %}<option value="{{ a }}" {{ 'selected' if a == e.art }}>{{ tr(a) }}</option>{% endfor %}</select></label>
   <label>Text <textarea name="text" rows="3">{{ e.text }}</textarea></label>

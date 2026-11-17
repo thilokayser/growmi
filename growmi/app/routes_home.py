@@ -120,16 +120,10 @@ def giessen_form(request: Request, conn=Depends(get_conn)):
 async def giessen_post(request: Request, rezept: str = Form("wasser"),
                        ph: str = Form(""), ec: str = Form(""), ts: str = Form(""), conn=Depends(get_conn)):
     data = await request.form()
-    typed = {int(k[7:]): str(v) for k, v in data.items() if k.startswith("liters_") and k[7:].isdigit()}
-    ml_typed = {tuple(map(int, k[3:].split("_"))): str(v) for k, v in data.items()
-                if k.startswith("ml_") and k[3:].replace("_", "").isdigit() and k.count("_") == 2}
+    typed, ml_typed = watering.raw_amounts(data)
     form = {"rezept": rezept, "ph": ph, "ec": ec, "ts": ts, "ml": {f"{p}_{f}": v for (p, f), v in ml_typed.items()}}
     try:
-        amounts = {pid: plants.parse_decimal(v) for pid, v in typed.items() if v.strip()}
-        if not amounts:
-            raise ValueError(tr("Bitte bei mindestens einer Pflanze Liter eintragen"))
-        plant_ml = {pid: {fid: plants.parse_decimal(v, allow_zero=True) for (p, fid), v in ml_typed.items()
-                          if p == pid and v.strip()} for pid in amounts}
+        amounts, plant_ml = watering.parse_amounts(typed, ml_typed)
         watering.add_watering(conn, ts=plants.norm_ts(ts), liters=0, plant_liters=amounts,
                               items=[], plant_ml=plant_ml,
                               ph=plants.parse_decimal(ph) if ph.strip() else None,

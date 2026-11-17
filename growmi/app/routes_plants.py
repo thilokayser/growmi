@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import Response
 
-from . import calc, config, entries, events, phase_link, plants, strains, tasks
+from . import calc, config, entries, events, phase_link, plants, strains, tasks, watering
 from .web import get_conn, redirect, remove_photo_files, render, snapshot_before
 from .i18n import tr
 
@@ -215,13 +215,21 @@ def _entry_or_404(conn, kind: str, entry_id: int):
     return row
 
 
-def _entry_ctx(conn, kind, row, back, error=None, checked=None):
+def _entry_ctx(conn, kind, row, back, error=None, form=None):
     ctx = {"e": row, "kind": kind, "arten": entries.ARTEN, "back": _safe_back(back), "error": error,
-           "all_plants": [], "checked": []}
+           "all_plants": [], "amounts": {}, "typed": {}, "ferts": [], "form": {}}
     if kind == "watering":
         ctx["all_plants"] = conn.execute("SELECT id, slot, sorte, ausgezogen_am FROM plant ORDER BY id").fetchall()
-        ctx["checked"] = checked if checked is not None else [
-            r[0] for r in conn.execute("SELECT plant_id FROM watering_plant WHERE watering_id=?", (row["id"],))]
+        ctx["ferts"] = conn.execute("SELECT id, produkt FROM fertilizer ORDER BY produkt").fetchall()
+        if form is None:  # the stored amounts of this watering
+            amounts = {r["plant_id"]: f"{r['liters']:g}" for r in conn.execute(
+                "SELECT plant_id, liters FROM watering_plant WHERE watering_id=?", (row["id"],))}
+            ml = {f"{r['plant_id']}_{r['fid']}": f"{r['ml']:g}" for r in conn.execute(
+                "SELECT wip.plant_id, wip.ml, f.id AS fid FROM watering_item_plant wip JOIN watering_item wi ON wi.id=wip.item_id"
+                " JOIN fertilizer f ON f.produkt=wi.produkt AND f.hersteller=wi.hersteller WHERE wi.watering_id=?", (row["id"],))}
+        else:
+            amounts, ml = form
+        ctx.update(amounts=amounts, typed=amounts, form={"ml": ml})
     return ctx
 
 
@@ -231,26 +239,26 @@ def entry_form(request: Request, kind: str, entry_id: int, back: str = "/", conn
 
 
 @router.post("/eintrag/{kind}/{entry_id}/bearbeiten")
-def entry_edit(request: Request, kind: str, entry_id: int, ts: str = Form(""), liters: str = Form(""),
-               ph: str = Form(""), ec: str = Form(""), art: str = Form(""), text: str = Form(""),
-               back: str = Form("/"), edit_plants: str = Form(""), plant_ids: list[int] = Form(default=[]),
-               conn=Depends(get_conn)):
+async def entry_edit(request: Request, kind: str, entry_id: int, ts: str = Form(""),
+                     ph: str = Form(""), ec: str = Form(""), art: str = Form(""), text: str = Form(""),
+                     back: str = Form("/"), conn=Depends(get_conn)):
     row = _entry_or_404(conn, kind, entry_id)
+    data = await request.form()
+    typed, ml_typed = watering.raw_amounts(data)
     try:
-        if kind == "watering" and edit_plants and not plant_ids:
-            raise ValueError(tr("Mindestens eine Pflanze auswählen"))
         fields = {"ts": plants.norm_ts(ts)}
         if kind == "watering":
-            fields.update(liters=plants.parse_decimal(liters),
-                          ph=plants.parse_decimal(ph) if ph.strip() else None,
+            amounts, plant_ml = watering.parse_amounts(typed, ml_typed)
+            fields.update(ph=plants.parse_decimal(ph) if ph.strip() else None,
                           ec=plants.parse_decimal(ec) if ec.strip() else None)
         elif kind == "intervention":
             fields.update(art=art, text=text)
         entries.update_entry(conn, kind, entry_id, **fields)
-        if kind == "watering" and edit_plants:
-            entries.set_watering_plants(conn, entry_id, plant_ids)
+        if kind == "watering":
+            watering.replace_amounts(conn, entry_id, amounts, plant_ml)
     except ValueError as e:
-        return render(request, "eintrag.html", 400, **_entry_ctx(conn, kind, row, back, str(e), plant_ids))
+        shown = (typed, {f"{p}_{f}": v for (p, f), v in ml_typed.items()}) if kind == "watering" else None
+        return render(request, "eintrag.html", 400, **_entry_ctx(conn, kind, row, back, str(e), shown))
     return redirect(request, _safe_back(back))
 
 

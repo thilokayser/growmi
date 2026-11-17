@@ -15,23 +15,21 @@ def test_intervention_art_validated(conn):
     assert entries.add_intervention(conn, ts="2026-10-20T12:00", plant_id=p, art="Topping")
 
 
-def test_update_watering_ts_and_liters(conn):
+def test_update_watering_ts(conn):
     plant(conn)
-    f = watering.add_fertilizer(conn, "Bloom", "BioBizz")
-    wid = watering.add_watering(conn, ts="2026-10-20T12:00", liters=2.0, items=[(f, 2.0)])
-    entries.update_entry(conn, "watering", wid, ts="2026-10-18T09:00", liters=3.0)
-    w = conn.execute("SELECT ts, liters FROM watering WHERE id=?", (wid,)).fetchone()
-    assert (w["ts"], w["liters"]) == ("2026-10-18T09:00", 3.0)
-    assert conn.execute("SELECT ml_total FROM watering_item WHERE watering_id=?", (wid,)).fetchone()[0] == 6.0
+    wid = watering.add_watering(conn, ts="2026-10-20T12:00", liters=2.0, items=[])
+    entries.update_entry(conn, "watering", wid, ts="2026-10-18T09:00", ph=6.1)
+    w = conn.execute("SELECT ts, ph FROM watering WHERE id=?", (wid,)).fetchone()
+    assert (w["ts"], w["ph"]) == ("2026-10-18T09:00", 6.1)
 
 
-def test_update_rejects_unknown_field_and_bad_liters(conn):
+def test_update_rejects_unknown_field_and_litres(conn):
     plant(conn)
     wid = watering.add_watering(conn, ts="2026-10-20T12:00", liters=2.0, items=[])
     with pytest.raises(ValueError):
         entries.update_entry(conn, "watering", wid, id=5)
     with pytest.raises(ValueError):
-        entries.update_entry(conn, "watering", wid, liters=0)
+        entries.update_entry(conn, "watering", wid, liters=3)
 
 
 def test_delete_watering_removes_children(conn):
@@ -59,17 +57,6 @@ def test_list_entries_sorted_newest_first_and_filters_by_plant(conn):
     only_a = entries.list_entries(conn, plant_id=a)
     assert [e["kind"] for e in only_a] == ["watering", "intervention"]
     assert all_[1]["plant_ids"] == [a, b]
-
-
-def test_set_watering_plants(conn):
-    a, b = plant(conn, 1), plant(conn, 2)
-    wid = watering.add_watering(conn, ts="2026-10-20T12:00", liters=2.0, items=[], plant_ids=[a])
-    entries.set_watering_plants(conn, wid, [a, b])
-    assert [r[0] for r in conn.execute("SELECT plant_id FROM watering_plant WHERE watering_id=? ORDER BY 1",
-                                       (wid,))] == [a, b]
-    with pytest.raises(ValueError):
-        entries.set_watering_plants(conn, wid, [])
-    assert conn.execute("SELECT COUNT(*) FROM watering_plant WHERE watering_id=?", (wid,)).fetchone()[0] == 2
 
 
 def test_unknown_plant_rejected_for_intervention_and_photo(conn):

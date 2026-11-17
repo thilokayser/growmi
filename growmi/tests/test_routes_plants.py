@@ -82,7 +82,7 @@ def test_backdated_entry_editable(web):
     c.close()
     assert "2026-10-20T12:00" in web.client.get(f"/eintrag/watering/{wid}").text
     r = web.client.post(f"/eintrag/watering/{wid}/bearbeiten",
-                        data={"ts": "2026-10-05T08:30", "liters": "3,5", "ph": "", "ec": ""})
+                        data={"ts": "2026-10-05T08:30", f"liters_{pid}": "3,5", "ph": "", "ec": ""})
     assert r.status_code == 303
     c = web.conn()
     row = c.execute("SELECT ts, liters FROM watering WHERE id=?", (wid,)).fetchone()
@@ -210,13 +210,14 @@ def test_watering_edit_plants(web):
     wid = watering.add_watering(c, ts="2026-10-20T12:00", liters=2.0, items=[], plant_ids=[a])
     c.close()
     form = web.client.get(f"/eintrag/watering/{wid}").text
-    assert f'value="{b}"' in form
-    data = {"ts": "2026-10-20T12:00", "liters": "2", "edit_plants": "1"}
-    assert web.client.post(f"/eintrag/watering/{wid}/bearbeiten", data={**data, "plant_ids": [a, b]}).status_code == 303
+    assert f'name="liters_{b}"' in form
+    data = {"ts": "2026-10-20T12:00"}
+    assert web.client.post(f"/eintrag/watering/{wid}/bearbeiten",
+                           data={**data, f"liters_{a}": "1", f"liters_{b}": "3"}).status_code == 303
     c = web.conn()
-    n = c.execute("SELECT COUNT(*) FROM watering_plant WHERE watering_id=?", (wid,)).fetchone()[0]
+    rows = c.execute("SELECT plant_id, liters FROM watering_plant WHERE watering_id=? ORDER BY 1", (wid,)).fetchall()
     c.close()
-    assert n == 2
+    assert [tuple(r) for r in rows] == [(a, 1.0), (b, 3.0)]
     assert web.client.post(f"/eintrag/watering/{wid}/bearbeiten", data=data).status_code == 400
 
 

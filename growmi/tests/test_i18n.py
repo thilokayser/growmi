@@ -57,7 +57,7 @@ def test_template_escapes_values_but_not_its_own_markup():
 
 def visible_text(html: str) -> list[str]:
     html = re.sub(r"<(script|style)\b.*?</\1>", "", html, flags=re.S)
-    nodes = re.findall(r">([^<>]+)<", html) + re.findall(r'(?:aria-label|placeholder|title|alt)="([^"]*)"', html) \
+    nodes = re.findall(r">([^<>]+)<", html) + re.findall(r'(?:aria-label|placeholder|title|alt|data-label)="([^"]*)"', html) \
         + re.findall(r"onsubmit='([^']*)'", html)
     return [re.sub(r"\s+", " ", n).strip() for n in nodes if re.search(r"[A-Za-zÄÖÜäöüß]{2,}", n)]
 

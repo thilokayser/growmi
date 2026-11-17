@@ -122,3 +122,13 @@ def test_own_vpd_band_beats_default(conn):
     finally:
         config.current = old
     assert heatmap.classify(1.0, True, "Blüte") == -1
+
+
+def test_first_hour_after_lights_on_is_judged_like_the_night(conn):
+    from app import db
+    for h, (vpd, light) in {3: (0.7, 0), 4: (0.76, 1), 5: (0.76, 1)}.items():
+        conn.execute("INSERT INTO climate_hour(day, hour, vpd, temp, rh, light, phase) VALUES ('2026-11-10',?,?,22,60,?,'Blüte')", (h, vpd, light))
+    conn.commit()
+    cells = heatmap.build(conn)["cells"]
+    assert cells[("2026-11-10", 4)]["status"] == 0   # ramp hour, night band
+    assert cells[("2026-11-10", 5)]["status"] == -1  # regular daytime hour, Blüte band starts at 1.2 by default

@@ -78,8 +78,12 @@ def catch_up_hours(conn, ha, now: datetime) -> None:
 def build(conn, days: int = DAYS) -> dict:
     shown = sorted(r[0] for r in conn.execute("SELECT DISTINCT day FROM climate_hour ORDER BY day DESC LIMIT ?", (days,)))
     cells = {}
-    for r in conn.execute(f"SELECT * FROM climate_hour WHERE day IN ({','.join('?' * len(shown))})", shown) if shown else []:
-        cells[(r["day"], r["hour"])] = {"vpd": r["vpd"], "status": classify(r["vpd"], bool(r["light"]), r["phase"])}
+    rows = list(conn.execute(f"SELECT * FROM climate_hour WHERE day IN ({','.join('?' * len(shown))})", shown)) if shown else []
+    lights = {(r["day"], r["hour"]): r["light"] for r in rows}
+    for r in rows:
+        prev = lights.get((r["day"], r["hour"] - 1)) if r["hour"] else lights.get(((date.fromisoformat(r["day"]) - timedelta(days=1)).isoformat(), 23))
+        ramp = bool(r["light"]) and prev == 0  # first hour after lights-on: the box is still warming up, judge it like the night
+        cells[(r["day"], r["hour"])] = {"vpd": r["vpd"], "status": classify(r["vpd"], bool(r["light"]) and not ramp, r["phase"])}
     spots = []
     for h in range(24):
         sts = [c["status"] for (d, hh), c in cells.items() if hh == h]

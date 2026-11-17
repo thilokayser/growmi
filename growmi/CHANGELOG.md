@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.24.1
+- Heatmap: the first hour after lights-on is judged like the night, so the warm-up hour is no longer marked "too humid".
+
 ## 0.24.0
 - Cockpit redesign: climate tiles (temperature, humidity, VPD with 24 h range) right under the alarms, devices in one grouped card.
 

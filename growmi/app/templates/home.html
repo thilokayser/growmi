@@ -42,7 +42,7 @@
       <a class="slot-link" href="{{ root }}/pflanze/{{ c.plant.id }}">
       <small class="slot-pos">{{ slot_label(c.slot) }}</small>
       <span class="canopy-box" aria-hidden="true"><span class="canopy ph-{{ c.phase }}" style="--size:{{ '%g' % c.canopy }}%"></span></span>
-      <span class="sorte">{{ c.plant.sorte }}</span>
+      <span class="sorte">{{ nick(c.plant) }}</span>{% if nick(c.plant) != c.plant.sorte %}<small>{{ c.plant.sorte }}</small>{% endif %}
       <span class="chip ph-{{ c.phase }}">{{ tr(c.phase) }}</span>{% if c.plant.typ %}<small>{{ c.plant.typ|typ }}</small>{% endif %}
       <small class="num">Tag {{ c.phase_day }} in dieser Phase</small>
       <small class="num">{{ c.water_ago }}</small>

@@ -27,12 +27,13 @@
   <h2>{{ g.sorte }}</h2>
   {% if avgs[g.sorte] %}<p class="muted num">⌀ {% for label, v in avgs[g.sorte] %}{{ label }} {{ ('%g' % (v|round(1))) if v is not none else '–' }}{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}
   <table class="num">
-    <thead><tr><th scope="col">Pflanze</th><th scope="col">Ertrag trocken</th><th scope="col">Wasser</th><th scope="col">Dünger</th><th scope="col">Strom</th><th scope="col">Kosten</th><th scope="col">g pro L</th><th scope="col">g pro ml</th><th scope="col">g pro kWh</th><th scope="col">€ pro g</th><th scope="col">Bewertung</th></tr></thead>
+    <thead><tr><th scope="col">Foto</th><th scope="col">Pflanze</th><th scope="col">Ertrag trocken</th><th scope="col">Wasser</th><th scope="col">Dünger</th><th scope="col">Strom</th><th scope="col">Kosten</th><th scope="col">g pro L</th><th scope="col">g pro ml</th><th scope="col">g pro kWh</th><th scope="col">€ pro g</th><th scope="col">Bewertung</th></tr></thead>
     <tbody>
     {% for t in g.plants %}
     {% set p = info[t.plant_id] %}
     <tr class="plant">
-      <td data-label="Pflanze"><a href="{{ root }}/pflanze/{{ t.plant_id }}">Platz {{ p.slot }} · {{ p.keimdatum|dt }}</a>{% if p.typ %}<br><small>{{ p.typ|typ }}</small>{% endif %}</td>
+      <td data-label="Foto">{% if last_photo.get(t.plant_id) %}<a href="{{ root }}/pflanze/{{ t.plant_id }}"><img class="thumb" src="{{ root }}/fotos/t_{{ last_photo[t.plant_id] }}" width="72" height="72" loading="lazy" alt="Letztes Foto {{ p.sorte }}"></a>{% else %}–{% endif %}</td>
+      <td data-label="Pflanze"><a href="{{ root }}/pflanze/{{ t.plant_id }}">{{ nick(p) }} · Platz {{ p.slot }}</a>{% if p.typ %}<br><small>{{ p.typ|typ }}</small>{% endif %}</td>
       <td data-label="Ertrag trocken">{{ ('%g g' % t.trocken_g) if t.trocken_g else '–' }}{{ bar(t.trocken_g, maxima.trocken_g) }}</td>
       <td data-label="Wasser">{{ ('%g L' % (t.water_l|round(1))) if t.water_l else '–' }}{{ bar(t.water_l, maxima.water_l) }}</td>
       <td data-label="Dünger"><span>{% for name, ml in t.fert_ml.items() %}{{ name }} {{ '%g' % (ml|round(1)) }} ml{{ '<br>'|safe if not loop.last }}{% else %}–{% endfor %}</span></td>

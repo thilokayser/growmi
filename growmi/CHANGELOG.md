@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.5
+- Auswertung: the latest photo of each plant is the first column.
+- Optional plant nicknames (off by default, switch in Einstellungen → Spitznamen). When on, the nickname replaces the strain name on the overview, plant page, timeline and analysis; the strain stays next to it. The plant form suggests rapper and stoner-meme names.
+
 ## 0.28.4
 - 24 h charts on the overview show typical target bands per box phase: temperature (Keimling 22–26, Wachstum 22–28, Blüte 20–26 °C), humidity (65–75, 50–70, 40–50 %) and VPD (as before). The humidity chart is shown again next to temperature.
 

@@ -282,3 +282,40 @@ def test_temperature_and_humidity_charts_get_typical_bands(web):
     t = web.client.get("/cockpit").text
     assert "Ziel 20–26 °C" in t and "Ziel 40–50 %" in t
     assert t.count('class="chart-band"') == 2  # no VPD history in this test
+
+
+def test_auswertung_shows_the_latest_photo_first(web):
+    from tests.test_ui_a11y import seeded
+    pid, _, _ = seeded(web)
+    c = web.conn()
+    c.execute("INSERT INTO photo(ts, plant_id, filename) VALUES ('2026-10-01T09:00', ?, 'old.jpg')", (pid,))
+    c.execute("INSERT INTO photo(ts, plant_id, filename) VALUES ('2026-10-05T09:00', ?, 'new.jpg')", (pid,))
+    c.commit(); c.close()
+    t = web.client.get("/auswertung").text
+    assert "/fotos/t_new.jpg" in t and "t_old.jpg" not in t
+    assert t.index("/fotos/t_new.jpg") < t.index("Platz 1")  # photo sits in front of the name
+
+
+def test_nicknames_are_off_by_default_and_replace_the_strain_when_on(web):
+    from app import config
+    pid = seed_plant(web, 1, "Northern Lights")
+    c = web.conn()
+    c.execute("UPDATE plant SET spitzname='Snoop' WHERE id=?", (pid,)); c.commit(); c.close()
+    assert "Snoop" not in web.client.get("/").text and "Northern Lights" in web.client.get("/").text
+    config.current["nicknames"] = True
+    t = web.client.get("/").text
+    assert "Snoop" in t and "<small>Northern Lights</small>" in t
+    assert "Snoop" in web.client.get(f"/pflanze/{pid}").text
+    config.current["nicknames"] = False
+
+
+def test_nickname_is_saved_only_when_the_option_is_on(web):
+    from app import config
+    pid = seed_plant(web, 1, "Northern Lights")
+    form = {"sorte": "Northern Lights", "spitzname": "Chronic Carl"}
+    web.client.post(f"/pflanze/{pid}/bearbeiten", data=form)
+    c = web.conn(); assert c.execute("SELECT spitzname FROM plant WHERE id=?", (pid,)).fetchone()[0] is None; c.close()
+    config.current["nicknames"] = True
+    web.client.post(f"/pflanze/{pid}/bearbeiten", data=form)
+    c = web.conn(); assert c.execute("SELECT spitzname FROM plant WHERE id=?", (pid,)).fetchone()[0] == "Chronic Carl"; c.close()
+    config.current["nicknames"] = False

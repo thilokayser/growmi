@@ -11,7 +11,7 @@ ENTITY_KEYS = ("temp", "rh", "vpd", "online", "battery", "phase", "light_on", "l
                "exhaust_mode", "maintenance", "price", "energy", "notify", "phase_script")
 ROLES = ("", "licht", "abluft", "ventilator")
 
-EMPTY = {**dict.fromkeys(ENTITY_KEYS, ""), "lang": "", "phase_link": False, "phase_light_on": "08:00:00",
+EMPTY = {**dict.fromkeys(ENTITY_KEYS, ""), "lang": "", "phase_link": False, "nicknames": False, "phase_light_on": "08:00:00",
          "phase_light_off": "20:00:00", "devices": [], "slots": ["", "", "", ""],
          "vpd_bands": {}}  # empty = default name, resolved in the current language
 

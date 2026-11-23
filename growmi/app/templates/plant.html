@@ -3,7 +3,7 @@
 {% block title %}{{ p.sorte }}{% endblock %}
 {% block content %}
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-<h1>{{ p.sorte }} <span class="chip ph-{{ current }}">{{ tr(current) }}</span>{% if p.typ %} <span class="chip chip-typ">{{ p.typ|typ }}</span>{% endif %}</h1>
+<h1>{{ nick(p) }} <span class="chip ph-{{ current }}">{{ tr(current) }}</span>{% if p.typ %} <span class="chip chip-typ">{{ p.typ|typ }}</span>{% endif %}</h1>
 {% include "_phase_banner.html" %}
 <p class="muted">{{ p.hersteller }} · Platz {{ p.slot }} · Keimdatum {{ p.keimdatum|dt }} · Topf {{ p.topf or '–' }}
   {% if p.ausgezogen_am %}· ausgezogen {{ p.ausgezogen_am|dt }}{% endif %}</p>
@@ -87,6 +87,8 @@
 <details><summary>Stammdaten ändern</summary>
 <form method="post" action="{{ root }}/pflanze/{{ p.id }}/bearbeiten">
   <label><span>Sorte <span class="req" aria-hidden="true">*</span></span><input name="sorte" required value="{{ p.sorte }}"></label>
+  {% if nicknames_on() %}<label>Spitzname <input name="spitzname" list="spitznamen" value="{{ p.spitzname or '' }}" placeholder="z. B. Snoop"></label>
+  <datalist id="spitznamen">{% for n in nickname_examples %}<option value="{{ n }}">{% endfor %}</datalist>{% endif %}
   <label>Hersteller <input name="hersteller" value="{{ p.hersteller }}"></label>
   <label>Keimdatum <input type="date" name="keimdatum" value="{{ p.keimdatum or '' }}"></label>
   <label>Typ <select name="typ"><option value="">–</option><option value="photo" {{ 'selected' if p.typ == 'photo' }}>Photoperiodisch</option><option value="auto" {{ 'selected' if p.typ == 'auto' }}>Autoflower</option></select></label>

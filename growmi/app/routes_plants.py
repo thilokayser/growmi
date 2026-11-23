@@ -186,7 +186,7 @@ def delete(request: Request, plant_id: int, conn=Depends(get_conn)):
 @router.post("/pflanze/{plant_id}/bearbeiten")
 def edit(request: Request, plant_id: int, sorte: str = Form(...), hersteller: str = Form(""),
          keimdatum: str = Form(""), topf: str = Form(""), notiz: str = Form(""), slot: str = Form(""),
-         eingesetzt_am: str = Form(""), typ: str = Form(""), conn=Depends(get_conn)):
+         eingesetzt_am: str = Form(""), typ: str = Form(""), spitzname: str = Form(""), conn=Depends(get_conn)):
     _plant_or_404(conn, plant_id)
     try:
         if not sorte.strip():
@@ -195,6 +195,8 @@ def edit(request: Request, plant_id: int, sorte: str = Form(...), hersteller: st
             plants.move_plant(conn, plant_id, int(slot))
         fields = dict(sorte=sorte.strip(), hersteller=hersteller.strip(),
                       keimdatum=plants.norm_date(keimdatum), topf=topf, notiz=notiz, typ=plants.norm_typ(typ))
+        if config.current["nicknames"]:  # the field is only on the form when the option is on
+            fields["spitzname"] = spitzname.strip() or None
         if eingesetzt_am.strip():
             fields["eingesetzt_am"] = plants.norm_ts(eingesetzt_am)
         plants.update_plant(conn, plant_id, **fields)

@@ -35,6 +35,7 @@ def parse(form) -> dict:
     data = {k: (form.get(k) or "").strip() for k in config.ENTITY_KEYS}
     data["lang"] = (form.get("lang") or "").strip()
     data["phase_link"] = form.get("phase_link") == "on"
+    data["nicknames"] = form.get("nicknames") == "on"
     data["phase_light_on"] = _time(form.get("phase_light_on"), "08:00:00")
     data["phase_light_off"] = _time(form.get("phase_light_off"), "20:00:00")
     lines = [line.strip() for line in (form.get("slots") or "").splitlines() if line.strip()]

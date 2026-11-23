@@ -17,7 +17,7 @@
 </ul>
 {% for r in rows %}
 <div class="tl-row">
-  <a href="{{ root }}/pflanze/{{ r.plant.id }}">Platz {{ r.plant.slot }} · {{ r.plant.sorte }}</a>
+  <a href="{{ root }}/pflanze/{{ r.plant.id }}">Platz {{ r.plant.slot }} · {{ nick(r.plant) }}</a>
   <div class="track" aria-hidden="true">
     {% for b in r.bars %}<div class="bar ph-{{ b.phase }}" style="left:{{ b.left_pct }}%;width:{{ b.width_pct }}%"><span>{{ tr(b.phase) }}</span></div>{% endfor %}
     {% for m in r.markers %}<span class="marker" style="left:{{ m.left_pct }}%" data-icon="{{ m.icon }}" title="{{ m.title }}">{{ icon(m.icon) }}{% if m.count > 1 %}<b>{{ m.count }}×</b>{% endif %}</span>{% endfor %}

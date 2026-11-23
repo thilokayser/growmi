@@ -41,6 +41,8 @@
   {{ entity_field('light_on', 'Licht an (Uhrzeit-Helfer)', 'datetime') }}
   {{ entity_field('light_off', 'Licht aus (Uhrzeit-Helfer)', 'datetime') }}
 
+  <h2>Spitznamen</h2>
+  <label class="check"><input type="checkbox" name="nicknames" {{ 'checked' if cfg.nicknames }}> Pflanzen Spitznamen geben (zeigt den Namen anstelle der Sorte, die Sorte bleibt daneben)</label>
   <h2>Phasen-Kopplung</h2>
   <label class="check"><input type="checkbox" name="phase_link" {{ 'checked' if cfg.phase_link }}> Box-Phase vorschlagen, wenn Pflanzen weiter sind (stellt auf Wunsch die Box um)</label>
   {{ entity_field('phase_script', 'Licht-Skript für Blüte', 'script', 'Skript, das „an“ und „aus“ als Uhrzeit bekommt. Ohne Skript wird nur die Phase umgestellt.') }}

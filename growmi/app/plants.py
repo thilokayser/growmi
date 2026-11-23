@@ -5,11 +5,16 @@ from datetime import datetime
 from . import config
 from .i18n import tr
 
+# examples for the nickname field: rapper and stoner-meme names, only suggestions
+NICKNAME_EXAMPLES = ("Snoop", "Method Man", "Redman", "B-Real", "Biggie", "Tupac", "Nas", "Ice Cube", "Eminem", "Dr. Dre",
+                     "Kendrick", "Jay-Z", "Ghostface", "Chronic Carl", "Dank Dave", "Mr. Bong", "Kush Kevin",
+                     "Sir Smokes-a-Lot", "Munchie Mike", "Blunt Bob", "Herb Hans", "Skunk Steve", "Bud Lightyear",
+                     "Dabbin' Dan")
 PHASES = ("Keimling", "Wachstum", "Blüte", "Trocknung", "Geerntet")
 BOX_PHASES = ("Keimling", "Wachstum", "Blüte")
 EDITABLE = {"sorte", "hersteller", "keimdatum", "topf", "notiz", "eingesetzt_am",
             "ausgezogen_am", "trocken_g", "nass_g", "bew_geschmack", "bew_wirkung", "bew_aufwand",
-            "trocknung_tage", "ernte_notiz", "typ"}
+            "trocknung_tage", "ernte_notiz", "typ", "spitzname"}
 
 
 TYPEN = {"auto": "Autoflower", "photo": "Photoperiodisch"}

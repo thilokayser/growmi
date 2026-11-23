@@ -5,6 +5,9 @@ from .i18n import tr
 
 VPD_TARGET = {"Keimling": (0.4, 0.8), "Wachstum": (0.8, 1.2), "Blüte": (1.2, 1.6)}  # same bands as the dashboard card
 NIGHT_BAND = (0.5, 0.9)
+# typical daytime values for cannabis per box phase (not learned from the sensor)
+TEMP_TARGET = {"Keimling": (22, 26), "Wachstum": (22, 28), "Blüte": (20, 26)}  # °C
+RH_TARGET = {"Keimling": (65, 75), "Wachstum": (50, 70), "Blüte": (40, 50)}  # %
 
 
 def band(phase: str | None) -> tuple[float, float] | None:

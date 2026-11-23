@@ -274,3 +274,11 @@ def test_vpd_chart_shows_the_target_band_of_the_box_phase(web):
     web.ha.states["input_select.grow_phase"] = "Keimling"
     web.ha.histories["sensor.growbox_vpd"] = [0.9, 1.3, 1.5]
     assert 'class="chart-band"' in web.client.get("/cockpit").text  # Keimling band 0.4..0.8 is still drawn
+
+
+def test_temperature_and_humidity_charts_get_typical_bands(web):
+    web.ha.states["input_select.grow_phase"] = "Blüte"
+    web.ha.histories.update({"sensor.growbox_temperatur": [21, 24, 25], "sensor.growbox_luftfeuchtigkeit": [45, 48, 52]})
+    t = web.client.get("/cockpit").text
+    assert "Ziel 20–26 °C" in t and "Ziel 40–50 %" in t
+    assert t.count('class="chart-band"') == 2  # no VPD history in this test

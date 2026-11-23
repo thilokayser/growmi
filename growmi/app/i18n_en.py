@@ -168,6 +168,7 @@ EN: dict[str, str] = {
     "pH und EC": "pH and EC",
     "{0} · Gießen": "{0} · Watering",
     "Gießen": "Watering",
+    "Abschnitte": "Sections",
     "Pflanzen Spitznamen geben (zeigt den Namen anstelle der Sorte, die Sorte bleibt daneben)": "Give plants nicknames (shows the name instead of the strain, the strain stays next to it)",
     "Spitzname": "Nickname",
     "Spitznamen": "Nicknames",

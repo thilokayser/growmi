@@ -11,6 +11,21 @@
     {% if hint %}<small class="muted">{{ tr(hint) }}</small>{% endif %}
   </label>
 {% endmacro %}
+{% block subnav %}
+<nav class="subnav" aria-label="Abschnitte">
+  <a href="#sprache">Sprache</a>
+  <a href="#klima">Klima</a>
+  <a href="#box-phase-und-licht">Box-Phase und Licht</a>
+  <a href="#spitznamen">Spitznamen</a>
+  <a href="#phasen-kopplung">Phasen-Kopplung</a>
+  <a href="#vpd-baender-kpa">VPD-Bänder (kPa)</a>
+  <a href="#ventilator-abluft-wartung">Ventilator, Abluft, Wartung</a>
+  <a href="#strom-und-meldungen">Strom und Meldungen</a>
+  <a href="#geraete">Geräte</a>
+  <a href="#plaetze">Plätze</a>
+  <a href="#sicherung">Sicherung</a>
+</nav>
+{% endblock %}
 {% block content %}
 <h1>Einstellungen</h1>
 {% if saved %}<p class="all-clear" role="status">Gespeichert.</p>{% endif %}
@@ -20,7 +35,7 @@
 {% for name, items in lists.items() %}<datalist id="dl-{{ name }}">{% for i in items %}<option value="{{ i }}">{% endfor %}</datalist>{% endfor %}
 
 <form method="post" action="{{ root }}/einstellungen" id="settings">
-  <h2>Sprache</h2>
+  <h2 id="sprache">Sprache</h2>
   <label>Oberfläche
     <select name="lang">
       <option value="" {{ 'selected' if not cfg.lang }}>{{ tr('Automatisch (wie Home Assistant)') }}</option>
@@ -29,27 +44,27 @@
     </select>
     <small class="muted">{{ tr('Gilt für die ganze Installation. Bereits gespeicherte Ereignisse behalten die Sprache, in der sie entstanden sind.') }}</small></label>
 
-  <h2>Klima</h2>
+  <h2 id="klima">Klima</h2>
   {{ entity_field('temp', 'Temperatur', 'sensor') }}
   {{ entity_field('rh', 'Luftfeuchte', 'sensor') }}
   {{ entity_field('vpd', 'VPD', 'sensor') }}
   {{ entity_field('online', 'Sensor online', 'binary', 'Binärsensor, der „on“ ist, solange der Klimasensor Werte liefert.') }}
   {{ entity_field('battery', 'Batterie des Sensors', 'sensor') }}
 
-  <h2>Box-Phase und Licht</h2>
+  <h2 id="box-phase-und-licht">Box-Phase und Licht</h2>
   {{ entity_field('phase', 'Box-Phase', 'select', 'Auswahlliste mit Keimling, Wachstum und Blüte.') }}
   {{ entity_field('light_on', 'Licht an (Uhrzeit-Helfer)', 'datetime') }}
   {{ entity_field('light_off', 'Licht aus (Uhrzeit-Helfer)', 'datetime') }}
 
-  <h2>Spitznamen</h2>
+  <h2 id="spitznamen">Spitznamen</h2>
   <label class="check"><input type="checkbox" name="nicknames" {{ 'checked' if cfg.nicknames }}> Pflanzen Spitznamen geben (zeigt den Namen anstelle der Sorte, die Sorte bleibt daneben)</label>
-  <h2>Phasen-Kopplung</h2>
+  <h2 id="phasen-kopplung">Phasen-Kopplung</h2>
   <label class="check"><input type="checkbox" name="phase_link" {{ 'checked' if cfg.phase_link }}> Box-Phase vorschlagen, wenn Pflanzen weiter sind (stellt auf Wunsch die Box um)</label>
   {{ entity_field('phase_script', 'Licht-Skript für Blüte', 'script', 'Skript, das „an“ und „aus“ als Uhrzeit bekommt. Ohne Skript wird nur die Phase umgestellt.') }}
   <label>Licht an in der Blüte <input type="time" name="phase_light_on" value="{{ cfg.phase_light_on[:5] }}"></label>
   <label>Licht aus in der Blüte <input type="time" name="phase_light_off" value="{{ cfg.phase_light_off[:5] }}"></label>
 
-  <h2>VPD-Bänder (kPa)</h2>
+  <h2 id="vpd-baender-kpa">VPD-Bänder (kPa)</h2>
   <p class="muted">Zielbereich bei Licht an. Leer lassen für die Standardwerte. Gilt für Heatmap, „VPD im Ziel“ und die Cockpit-Anzeige.</p>
   {% for ph in ('Keimling', 'Wachstum', 'Blüte') %}
   <div class="row"><b>{{ tr(ph) }}</b>
@@ -57,19 +72,19 @@
     <label>bis <input name="vpd_hi_{{ ph }}" inputmode="decimal" size="4" value="{{ (cfg.vpd_bands.get(ph) or ['', ''])[1] }}" placeholder="{{ default_bands[ph][1] }}"></label></div>
   {% endfor %}
 
-  <h2>Ventilator, Abluft, Wartung</h2>
+  <h2 id="ventilator-abluft-wartung">Ventilator, Abluft, Wartung</h2>
   {{ entity_field('fan_mode', 'Ventilator-Modus', 'select', 'Auswahlliste mit Auto, Dauer an, Dauer aus.') }}
   {{ entity_field('exhaust_mode', 'Abluft-Modus', 'select', 'Auswahlliste mit Feuchteschutz, Standard.') }}
   {{ entity_field('maintenance', 'Wartungs-Timer', 'timer') }}
 
-  <h2>Strom und Meldungen</h2>
+  <h2 id="strom-und-meldungen">Strom und Meldungen</h2>
   {{ entity_field('price', 'Strompreis (€/kWh)', 'sensor', 'Zahlen-Helfer. Leer: es gilt der Wert aus den Add-on-Optionen.') }}
   {{ entity_field('energy', 'Energiezähler (kWh, aufsummierend)', 'sensor', 'Leer: es gilt der Wert aus den Add-on-Optionen.') }}
   <label>Benachrichtigungsdienst
     <input name="notify" value="{{ cfg.notify }}" placeholder="z. B. notify.mobile_app_telefon">
     <small class="muted">Leer: es gilt der Wert aus den Add-on-Optionen.</small></label>
 
-  <h2>Geräte</h2>
+  <h2 id="geraete">Geräte</h2>
   <p class="muted">Schalter, deren Betriebsstunden und Zustand die App zeigt. Rolle „Licht“ ergänzt die Heatmap. Zeile leeren entfernt das Gerät.</p>
   {% for d in cfg.devices %}
   <fieldset class="device">
@@ -93,14 +108,14 @@
   </fieldset>
   {% endfor %}
 
-  <h2>Plätze</h2>
+  <h2 id="plaetze">Plätze</h2>
   <label>Ein Name pro Zeile, 1 bis 8 Plätze. Der erste steht vorne links, dann nach rechts und nach hinten.
     <textarea name="slots" rows="6">{{ slot_text }}</textarea></label>
   <p class="muted">Pflanzen auf wegfallenden Plätzen verhindern das Speichern. Erst verschieben oder ausziehen.</p>
 
   <button class="btn">Speichern</button>
 </form>
-<h2>Sicherung</h2>
+<h2 id="sicherung">Sicherung</h2>
 <p class="muted">Eine Kopie von Daten, Einstellungen und Fotos liegt jede Nacht im Ordner <code>/share/growmi</code>.</p>
 <p><a class="btn ghost" href="{{ root }}/export.json">Export als JSON</a> <a class="btn ghost" href="{{ root }}/wiederherstellen">Sicherung wiederherstellen</a></p>
 <script>

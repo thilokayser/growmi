@@ -319,3 +319,15 @@ def test_nickname_is_saved_only_when_the_option_is_on(web):
     web.client.post(f"/pflanze/{pid}/bearbeiten", data=form)
     c = web.conn(); assert c.execute("SELECT spitzname FROM plant WHERE id=?", (pid,)).fetchone()[0] == "Chronic Carl"; c.close()
     config.current["nicknames"] = False
+
+
+def test_verlauf_events_section_is_collapsible(web):
+    seed_plant(web, 1)  # the timeline page is empty without plants
+    c = web.conn()
+    events.add_event(c, "2026-10-20T09:00", "info", "Lüfter an")
+    c.commit(); c.close()
+    t = web.client.get("/verlauf").text
+    assert '<details class="collapse" open>' in t
+    assert "Lüfter an" in t
+    assert 'class="subnav"' not in t  # the settings links only appear on the settings page
+    assert 'class="subnav"' in web.client.get("/einstellungen").text

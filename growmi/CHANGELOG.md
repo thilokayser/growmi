@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.6
+- Desktop: the navigation is a sidebar on the left (from 60 rem width). On the settings page the sidebar also lists the sections as links.
+- Verlauf: the section "Ereignisse im Zelt" can be collapsed.
+
 ## 0.28.5
 - Auswertung: the latest photo of each plant is the first column.
 - Optional plant nicknames (off by default, switch in Einstellungen → Spitznamen). When on, the nickname replaces the strain name on the overview, plant page, timeline and analysis; the strain stays next to it. The plant form suggests rapper and stoner-meme names.

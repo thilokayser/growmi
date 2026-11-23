@@ -36,8 +36,10 @@
 {% endfor %}
 {% endif %}
 {% if zelt_events %}
-<h2>Ereignisse im Zelt</h2>
-<ul class="journal">{% for e in zelt_events %}<li><time class="num">{{ e.ts|dt }}</time> {{ e.text }}</li>{% endfor %}</ul>
+<details class="collapse" open>
+  <summary><h2>Ereignisse im Zelt</h2></summary>
+  <ul class="journal">{% for e in zelt_events %}<li><time class="num">{{ e.ts|dt }}</time> {{ e.text }}</li>{% endfor %}</ul>
+</details>
 {% endif %}
 <p class="axis num"><span>{{ von|dt }}</span><span>{{ bis|dt }}</span></p>
 {% endif %}

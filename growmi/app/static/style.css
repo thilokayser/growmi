@@ -369,8 +369,8 @@ output { font-size: .9rem; }
   background: color-mix(in srgb, var(--bg-alt) 55%, transparent); border: 1px solid var(--hairline); }
 .stat-value { font-size: 2rem; font-weight: 500; letter-spacing: -.03em; line-height: 1; }
 .stat-value small { font-size: 1rem; color: var(--muted); margin-left: .1rem; }
-.bar { height: .35rem; border-radius: 999px; background: color-mix(in srgb, var(--text) 12%, transparent); overflow: hidden; }
-.bar i { display: block; height: 100%; border-radius: inherit; background: var(--c); }
+.gauge { height: .35rem; border-radius: 999px; background: color-mix(in srgb, var(--text) 12%, transparent); overflow: hidden; }
+.gauge i { display: block; height: 100%; border-radius: inherit; background: var(--c); }
 .stat-label { color: var(--c); font-size: .9rem; }
 .quick-pills { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
 .pill-btn { display: flex; align-items: center; gap: .7rem; padding: .55rem 1rem .55rem .55rem; border-radius: 999px; min-width: 0;

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.28.2
+- Fix: the phase colors of the timeline were gone (a class name clash with the new climate gauges).
+
 ## 0.28.1
 - Overview follows the dashboard look: steel-blue to slate background, lighter cards, no bar under the app bar. Climate values sit in one card with an icon badge, status pill and bars; quick actions are pills.
 

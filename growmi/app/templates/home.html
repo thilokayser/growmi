@@ -18,11 +18,11 @@
   </div>
   <div class="stats">
     {% if live.has.temp %}<div class="stat c-temp"><span class="stat-value num">{{ live.temp or '–' }}{% if live.temp %}<small>°C</small>{% endif %}</span>
-      <span class="bar" aria-hidden="true"><i style="width:{{ live.temp_pct }}%"></i></span><span class="stat-label">Temperatur</span></div>{% endif %}
+      <span class="gauge" aria-hidden="true"><i style="width:{{ live.temp_pct }}%"></i></span><span class="stat-label">Temperatur</span></div>{% endif %}
     {% if live.has.rh %}<div class="stat c-rh"><span class="stat-value num">{{ live.rh or '–' }}{% if live.rh %}<small>%</small>{% endif %}</span>
-      <span class="bar" aria-hidden="true"><i style="width:{{ live.rh_pct }}%"></i></span><span class="stat-label">Luftfeuchte</span></div>{% endif %}
+      <span class="gauge" aria-hidden="true"><i style="width:{{ live.rh_pct }}%"></i></span><span class="stat-label">Luftfeuchte</span></div>{% endif %}
     {% if live.has.vpd %}<div class="stat c-vpd"><span class="stat-value num">{{ live.vpd or '–' }}{% if live.vpd %}<small>kPa</small>{% endif %}</span>
-      <span class="bar" aria-hidden="true"><i style="width:{{ live.vpd_pct }}%"></i></span>
+      <span class="gauge" aria-hidden="true"><i style="width:{{ live.vpd_pct }}%"></i></span>
       <span class="stat-label">VPD{% if live.vpd_status %} · {{ tr('im Ziel') if live.vpd_status == 'ok' else tr('außerhalb') }}{% endif %}</span></div>{% endif %}
   </div>
 </section>{% endif %}

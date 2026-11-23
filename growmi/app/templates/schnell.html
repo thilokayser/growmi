@@ -21,7 +21,7 @@
 <section class="quick" aria-labelledby="q-giessen">
   <h2 id="q-giessen">Gießen</h2>
   <form method="post" action="{{ root }}/pflanze/{{ p.id }}/schnell/giessen">
-    <label><span>Liter pro Pflanze <span class="req" aria-hidden="true">*</span></span><input name="liters" inputmode="decimal" required value="{{ liters }}"></label>
+    <label><span>Liter <span class="req" aria-hidden="true">*</span></span><input name="liters" inputmode="decimal" required value="{{ liters }}"></label>
     <label>Rezept
       <select name="rezept">
         {% if plan %}<option value="plan" {{ 'selected' if rezept == 'plan' }}>{{ plan.label }}</option>{% endif %}
@@ -29,10 +29,6 @@
         <option value="wasser" {{ 'selected' if rezept == 'wasser' }}>Nur Wasser</option>
       </select>
     </label>
-    <fieldset><legend>Gegossen wurde</legend>
-      <label class="check"><input type="radio" name="scope" value="all" checked> Alle Pflanzen im Zelt{% if others > 0 %} ({{ others + 1 }}){% endif %}</label>
-      <label class="check"><input type="radio" name="scope" value="only"> Nur diese Pflanze</label>
-    </fieldset>
     <button class="btn big">{{ icon('droplet') }} Gießen eintragen</button>
   </form>
 </section>

@@ -1,4 +1,5 @@
 import io
+import re
 
 from PIL import Image
 
@@ -32,16 +33,16 @@ def test_quick_page_has_the_big_actions(web):
     t = web.client.get(f"/pflanze/{a}/schnell").text
     assert "Alpha" in t and 'value="3.5"' in t
     assert 'capture="environment"' in t and 'action="/foto"' in t and f'action="/pflanze/{a}/notiz"' in t
-    assert 'name="scope"' in t
+    assert 'name="scope"' not in t and f'action="/pflanze/{a}/schnell/giessen"' in t
     assert web.client.get("/pflanze/99/schnell").status_code == 404
 
 
-def test_quick_watering_scope_all_or_only_this_plant(web):
+def test_quick_watering_waters_only_this_plant(web):
     a, b = two(web)
-    r = web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "2", "rezept": "wasser", "scope": "all"})
+    r = web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "2", "rezept": "wasser"})
     assert r.status_code == 303 and r.headers["location"] == f"/pflanze/{a}/schnell?ok=giessen"
-    web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "1,5", "rezept": "wasser", "scope": "only"})
-    assert waterings(web) == [[a, b], [a]]
+    web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "1,5", "rezept": "wasser", "scope": "all"})  # old forms
+    assert waterings(web) == [[a], [a]]
 
 
 def test_quick_watering_uses_recipe_and_rejects_bad_liters(web):
@@ -50,11 +51,11 @@ def test_quick_watering_uses_recipe_and_rejects_bad_liters(web):
     f = watering.add_fertilizer(c, "Grow", "Compo")
     watering.set_recipe(c, "Wachstum", [(f, 2.0)])
     c.close()
-    web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "3", "rezept": "Wachstum", "scope": "all"})
+    web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "3", "rezept": "Wachstum"})
     c = web.conn()
-    assert c.execute("SELECT ml_total FROM watering_item").fetchone()[0] == 12.0  # 3 L per plant, two plants
+    assert c.execute("SELECT ml_total FROM watering_item").fetchone()[0] == 6.0  # 3 L for this plant
     c.close()
-    r = web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "0", "rezept": "wasser", "scope": "all"})
+    r = web.client.post(f"/pflanze/{a}/schnell/giessen", data={"liters": "0", "rezept": "wasser"})
     assert r.status_code == 400 and count(web, "watering") == 1
 
 
@@ -117,3 +118,70 @@ def test_kiosk_toggle_buttons(web):
 def test_giessen_offers_one_amount_for_all_plants(web):
     two(web)
     assert 'id="all-liters"' in web.client.get("/giessen").text
+
+
+# ---- watering from the overview ----------------------------------------------------------
+
+def test_overview_card_has_its_own_water_button_and_the_sheet(web):
+    a, _ = two(web)
+    t = web.client.get("/").text
+    assert f'class="water-btn" href="/pflanze/{a}/giessen"' in t and 'id="water-dialog"' in t
+    assert "Alle gießen" in t and f'href="/pflanze/{a}"' in t
+
+
+def test_water_one_plant_from_the_overview_and_undo(web):
+    a, b = two(web)
+    c = web.conn()
+    f = watering.add_fertilizer(c, "Grow", "Compo")
+    watering.set_recipe(c, "Wachstum", [(f, 2.0)])
+    c.close()
+    r = web.client.post(f"/pflanze/{a}/giessen", data={"liters": "2,5", "rezept": "Wachstum", "ph": "6,1"})
+    assert r.status_code == 303 and r.headers["location"].startswith("/?gegossen=")
+    assert waterings(web) == [[a]]
+    c = web.conn()
+    assert c.execute("SELECT ml_total FROM watering_item").fetchone()[0] == 5.0
+    assert c.execute("SELECT ph FROM watering").fetchone()[0] == 6.1
+    c.close()
+    home = web.client.get(r.headers["location"]).text
+    wid = r.headers["location"].split("=")[1]
+    assert f'action="/eintrag/watering/{wid}/loeschen"' in home
+    web.client.post(f"/eintrag/watering/{wid}/loeschen", data={"back": "/"})
+    assert waterings(web) == []
+    assert web.client.post(f"/pflanze/{a}/giessen", data={"liters": "0", "rezept": "wasser"}).status_code == 400
+    assert web.client.get(f"/pflanze/{a}/giessen").status_code == 200 and web.client.get("/pflanze/99/giessen").status_code == 404
+
+
+def test_card_shows_last_amount_and_thirst(web):
+    a, b = two(web)
+    web.client.post(f"/pflanze/{a}/giessen", data={"liters": "1,5", "rezept": "wasser"})
+    t = web.client.get("/").text
+    assert "heute gegossen · 1.5 L" in t
+    card = lambda pid: re.search(rf'<div class="slot full[^"]*"(?:(?!</div>).)*?/pflanze/{pid}"', t, re.S).group(0)
+    assert "thirsty" not in card(a) and "thirsty" in card(b)  # never watered counts as thirsty
+
+
+def test_bulk_watering_uses_ticked_plants_common_amount_and_recipe(web):
+    a, b = two(web)
+    c = web.conn()
+    f = watering.add_fertilizer(c, "Grow", "Compo")
+    watering.set_recipe(c, "Wachstum", [(f, 2.0)])
+    c.close()
+    r = web.client.post("/giessen", data={f"sel_{a}": "on", f"sel_{b}": "on", "liters_all": "2", f"liters_{b}": "4",
+                                           "rezept": "Wachstum"})
+    assert r.status_code == 303
+    c = web.conn()
+    assert dict(c.execute("SELECT plant_id, liters FROM watering_plant")) == {a: 2.0, b: 4.0}
+    assert dict(c.execute("SELECT plant_id, ml FROM watering_item_plant")) == {a: 4.0, b: 8.0}  # recipe x own litres
+    c.close()
+    web.client.post("/giessen", data={f"sel_{a}": "on", "liters_all": "1", "rezept": "wasser"})
+    assert waterings(web)[-1] == [a]  # the unticked plant is left out
+    assert web.client.post("/giessen", data={"liters_all": "1", "rezept": "wasser", f"sel_{a}": ""}).status_code == 303
+    assert web.client.post("/giessen", data={"rezept": "wasser"}).status_code == 400
+
+
+def test_bulk_form_leaves_plants_watered_today_unticked(web):
+    a, b = two(web)
+    web.client.post(f"/pflanze/{a}/giessen", data={"liters": "1", "rezept": "wasser"})
+    t = web.client.get("/giessen").text
+    assert f'name="sel_{a}" checked' not in t
+    assert f'name="sel_{b}" checked' in t and "heute schon gegossen" in t

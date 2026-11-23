@@ -1,0 +1,40 @@
+{% from "icons.html" import icon %}
+{# One plant, one watering: litres, recipe with the ml it comes to, optional pH/EC. Used on the plant page and in the sheet on the overview. #}
+{% macro water_form(action, liters, rezept, water, ph='', ec='') %}
+<form method="post" action="{{ action }}" class="water-one">
+  <label><span>Liter <span class="req" aria-hidden="true">*</span></span><input name="liters" inputmode="decimal" required value="{{ liters }}"></label>
+  <label>Rezept
+    <select name="rezept">
+      {% if water.plan %}<option value="plan" {{ 'selected' if rezept == 'plan' }}>{{ water.plan.label }}</option>{% endif %}
+      {% for ph_, items in water.recipes.items() %}<option value="{{ ph_ }}" {{ 'selected' if ph_ == rezept }}>{{ tr(ph_) }}{% if items %} ({% for i in items %}{{ i.produkt }} {{ '%g' % i.ml_per_l }} ml/L{{ ', ' if not loop.last }}{% endfor %}){% else %} (kein Rezept){% endif %}</option>{% endfor %}
+      <option value="wasser" {{ 'selected' if rezept == 'wasser' }}>Nur Wasser</option>
+    </select>
+  </label>
+  <p class="muted water-preview" aria-live="polite"></p>
+  <details><summary>pH und EC</summary>
+    <label>pH (optional) <input name="ph" inputmode="decimal" value="{{ ph }}"></label>
+    <label>EC (optional) <input name="ec" inputmode="decimal" value="{{ ec }}"></label>
+  </details>
+  <button class="btn big">{{ icon('droplet') }} Gießen eintragen</button>
+</form>
+{% endmacro %}
+
+{# shows the ml of every fertilizer for the litres typed; the server computes the same numbers #}
+{% macro water_preview_js(water) %}
+<script>
+(function () {
+  var mix = {{ water.mix | tojson }}, names = {{ water.ferts | tojson }};
+  document.querySelectorAll("form.water-one").forEach(function (form) {
+    var out = form.querySelector(".water-preview");
+    function show() {
+      var l = parseFloat(form.elements.liters.value.replace(",", ".")), m = mix[form.elements.rezept.value] || {};
+      out.textContent = l > 0 ? Object.keys(m).map(function (f) {
+        return names[f] + " " + (Math.round(m[f] * l * 10) / 10) + " ml"; }).join(" · ") : "";
+    }
+    form.addEventListener("input", show);
+    form.addEventListener("water-open", show);
+    show();
+  });
+})();
+</script>
+{% endmacro %}

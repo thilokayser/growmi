@@ -37,7 +37,7 @@ def test_home_water_liters_shown(web):
     c = web.conn()
     watering.add_watering(c, ts="2026-10-20T12:00", liters=3.0, items=[])
     c.close()
-    assert web.client.get("/").text.count("1.5 L") == 2
+    assert web.client.get("/").text.count("1.5 L") == 4  # per plant: total so far and last amount
 
 
 def test_giessen_form_preselects_current_box_phase_recipe(web):

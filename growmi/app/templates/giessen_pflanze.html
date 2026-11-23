@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% from "_water_one.html" import water_form, water_preview_js %}
+{% block title %}{{ p.sorte }} · Gießen{% endblock %}
+{% block content %}
+<h1>{{ icon('droplet') }} {{ p.sorte }}</h1>
+<p class="muted">{{ slot_label(p.slot) }}</p>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{{ water_form(root ~ '/pflanze/' ~ p.id ~ '/giessen', liters, rezept, water, form.ph or '', form.ec or '') }}
+{{ water_preview_js(water) }}
+{% endblock %}

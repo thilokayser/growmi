@@ -1,10 +1,11 @@
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 
 from . import calc, config, entries, heatmap, images, jobs, phase_link, plants, watering
+from .routes_plants import _plant_or_404
 from .web import get_conn, redirect, render
 from .i18n import tr
 
@@ -33,8 +34,15 @@ def _ago(days: int | None) -> str:
     return {0: tr("heute gegossen"), 1: tr("gestern gegossen")}.get(days) or tr("vor {n} Tagen gegossen", n=days)
 
 
-def slot_cards(conn) -> list[dict]:
+def last_liters(conn, plant_id: int) -> float | None:
+    row = conn.execute("SELECT wp.liters FROM watering_plant wp JOIN watering w ON w.id=wp.watering_id"
+                       " WHERE wp.plant_id=? ORDER BY w.ts DESC, w.id DESC LIMIT 1", (plant_id,)).fetchone()
+    return row["liters"] if row and row["liters"] else None
+
+
+def slot_cards(conn, options: dict | None = None) -> list[dict]:
     now = datetime.now()
+    limit = jobs.reminder_days(conn, now, options or {})
     cards = []
     for slot in config.slots():
         pid = plants.slot_occupant(conn, slot)
@@ -47,10 +55,13 @@ def slot_cards(conn) -> list[dict]:
         ab = conn.execute("SELECT ab FROM plant_phase WHERE plant_id=? ORDER BY ab DESC, id DESC LIMIT 1",
                           (pid,)).fetchone()["ab"]
         age = _days(p["keimdatum"] or p["eingesetzt_am"], now)
+        since = calc.days_since_water(conn, pid, now.date())
+        liters = last_liters(conn, pid)
         cards.append({**place, "plant": p, "canopy": canopy_pct(age), "phase": plants.current_phase(conn, pid),
                       "phase_day": _days(ab, now) + 1, "age_days": age, "week": age // 7 + 1,
                       "water_l": calc.plant_totals(conn, pid).water_l,
-                      "water_ago": _ago(calc.days_since_water(conn, pid, now.date()))})
+                      "water_ago": _ago(since) + (f" · {liters:g} L" if since is not None and liters else ""),
+                      "last_l": f"{liters:g}" if liters else "", "thirsty": since is None or since >= limit})
     return cards
 
 
@@ -79,36 +90,59 @@ def live_values(ha, box_phase: str | None) -> dict:
 
 
 @router.get("/")
-def home(request: Request, conn=Depends(get_conn)):
+def home(request: Request, gegossen: int | None = None, conn=Depends(get_conn)):
     box = config.state(request.app.state.ha, "phase") or jobs.last_box_phase(conn)
-    return render(request, "home.html", cards=slot_cards(conn), live=live_values(request.app.state.ha, box),
+    return render(request, "home.html", cards=slot_cards(conn, request.app.state.options),
+                  live=live_values(request.app.state.ha, box), undo=_recent_watering(conn, gegossen),
+                  water=water_options(conn),
                   phase_suggestion=phase_link.suggestion(conn, request.app.state.ha, date.today()), back="/")
 
 
-def _giessen_ctx(conn, form=None, error=None, typed=None):
+def _recent_watering(conn, wid: int | None):
+    """The watering just logged from the overview, offered for undo for a few minutes."""
+    if wid is None:
+        return None
+    row = conn.execute("SELECT w.id, w.ts, w.liters, p.sorte FROM watering w JOIN watering_plant wp ON wp.watering_id=w.id"
+                       " JOIN plant p ON p.id=wp.plant_id WHERE w.id=?", (wid,)).fetchone()
+    return row if row and row["ts"] >= (datetime.now() - timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M") else None
+
+
+def water_options(conn) -> dict:
+    """Recipe choices of a watering form: what each recipe means in ml per litre, and which one is preselected."""
     box = jobs.last_box_phase(conn) or "Wachstum"
-    form = dict(form or {})
     recipes = {ph: watering.get_recipe(conn, ph) for ph in plants.BOX_PHASES}
-    plist = occupied_now(conn)
-    current = {p["id"] for p in plist}
-    others = [p for p in conn.execute("SELECT id, slot, sorte FROM plant ORDER BY id DESC") if p["id"] not in current]
     plan = watering.current_recipe(conn, date.today())
     plan = plan if plan["source"] == "plan" else None
-    # a plant is mostly watered the same amount: start from its last one (or what was just typed)
-    amounts = {r["plant_id"]: f"{r['liters']:g}" for r in conn.execute(
-        "SELECT wp.plant_id, wp.liters FROM watering_plant wp JOIN watering w ON w.id=wp.watering_id"
-        " ORDER BY w.ts, w.id")}
-    amounts.update(typed or {})
-    ferts = conn.execute("SELECT id, produkt FROM fertilizer ORDER BY produkt").fetchall()
-    # ml per litre of every recipe choice, for the form to pre-fill the fertilizer fields
     mix = {ph: {i.fertilizer_id: i.ml_per_l for i in items} for ph, items in recipes.items()}
     mix["wasser"] = {}
     if plan:
         mix["plan"] = dict(plan["items"])
-    return {"ferts": ferts, "mix": mix, "plants": plist, "others": others, "recipes": recipes, "plan": plan,
-            "default_rezept": form.get("rezept") or ("plan" if plan else box),
-            "form": form, "error": error, "ts": form.get("ts") or plants.now_ts(),
-            "amounts": amounts, "typed": typed or {}}
+    ferts = {r["id"]: r["produkt"] for r in conn.execute("SELECT id, produkt FROM fertilizer")}
+    return {"recipes": recipes, "plan": plan, "mix": mix, "ferts": ferts, "rezept": "plan" if plan else box}
+
+
+def _watered_today(conn) -> set[int]:
+    return {r[0] for r in conn.execute("SELECT wp.plant_id FROM watering_plant wp JOIN watering w ON w.id=wp.watering_id"
+                                       " WHERE substr(w.ts,1,10)=?", (date.today().isoformat(),))}
+
+
+def _giessen_ctx(conn, form=None, error=None, typed=None, checked=None):
+    form = dict(form or {})
+    plist = occupied_now(conn)
+    current = {p["id"] for p in plist}
+    others = [p for p in conn.execute("SELECT id, slot, sorte FROM plant ORDER BY id DESC") if p["id"] not in current]
+    water = water_options(conn)
+    # a plant is mostly watered the same amount: show its last one as the hint for an own amount
+    last = {p["id"]: f"{last_liters(conn, p['id']):g}" for p in [*plist, *others] if last_liters(conn, p["id"])}
+    if checked is None:  # whoever was watered alone today stays unticked: no double watering
+        done = _watered_today(conn)
+        checked = {p["id"] for p in plist if p["id"] not in done}
+    ml = form.get("ml") or {}
+    return {"ferts": [{"id": i, "produkt": n} for i, n in sorted(water["ferts"].items(), key=lambda t: t[1])],
+            "plants": plist, "others": others, "recipes": water["recipes"], "plan": water["plan"],
+            "default_rezept": form.get("rezept") or water["rezept"], "form": form, "error": error,
+            "ts": form.get("ts") or plants.now_ts(), "last": last, "typed": typed or {}, "ml": ml, "checked": checked,
+            "common": form.get("liters_all", ""), "done": _watered_today(conn)}
 
 
 @router.get("/giessen")
@@ -121,16 +155,50 @@ async def giessen_post(request: Request, rezept: str = Form("wasser"),
                        ph: str = Form(""), ec: str = Form(""), ts: str = Form(""), conn=Depends(get_conn)):
     data = await request.form()
     typed, ml_typed = watering.raw_amounts(data)
-    form = {"rezept": rezept, "ph": ph, "ec": ec, "ts": ts, "ml": {f"{p}_{f}": v for (p, f), v in ml_typed.items()}}
+    common = str(data.get("liters_all", "")).strip()
+    sel = {int(k[4:]) for k in data if k.startswith("sel_") and k[4:].isdigit()}
+    form = {"rezept": rezept, "ph": ph, "ec": ec, "ts": ts, "liters_all": common,
+            "ml": {f"{p}_{f}": v for (p, f), v in ml_typed.items()}}
     try:
-        amounts, plant_ml = watering.parse_amounts(typed, ml_typed)
-        watering.add_watering(conn, ts=plants.norm_ts(ts), liters=0, plant_liters=amounts,
-                              items=[], plant_ml=plant_ml,
+        # ticked plants get their own amount or else the common one; without ticks (old forms) a typed amount means watered
+        wanted = {pid: typed.get(pid, "").strip() or common for pid in sel} if sel else typed
+        amounts, plant_ml = watering.parse_amounts(wanted, ml_typed)
+        items = watering.items_for(conn, rezept, date.today())
+        plant_ml = {pid: m or {fid: per_l * amounts[pid] for fid, per_l in items} for pid, m in plant_ml.items()}
+        watering.add_watering(conn, ts=plants.norm_ts(ts), liters=0, items=[], plant_liters=amounts, plant_ml=plant_ml,
                               ph=plants.parse_decimal(ph) if ph.strip() else None,
                               ec=plants.parse_decimal(ec) if ec.strip() else None)
     except ValueError as e:
-        return render(request, "giessen.html", 400, **_giessen_ctx(conn, form, str(e), typed))
+        return render(request, "giessen.html", 400, **_giessen_ctx(conn, form, str(e), typed, sel or None))
     return redirect(request)
+
+
+def _plant_water_page(request, conn, plant_id, status=200, error=None, form=None):
+    p = _plant_or_404(conn, plant_id)
+    form = form or {}
+    water = water_options(conn)
+    return render(request, "giessen_pflanze.html", status, p=p, water=water, error=error, active_slot=p["slot"],
+                  rezept=form.get("rezept") or water["rezept"], form=form,
+                  liters=form.get("liters") or (f"{last_liters(conn, plant_id):g}" if last_liters(conn, plant_id) else ""))
+
+
+@router.get("/pflanze/{plant_id}/giessen")
+def water_plant_form(request: Request, plant_id: int, conn=Depends(get_conn)):
+    return _plant_water_page(request, conn, plant_id)
+
+
+@router.post("/pflanze/{plant_id}/giessen")
+def water_plant(request: Request, plant_id: int, liters: str = Form(""), rezept: str = Form("wasser"),
+                ph: str = Form(""), ec: str = Form(""), conn=Depends(get_conn)):
+    _plant_or_404(conn, plant_id)
+    try:
+        wid = watering.add_watering(
+            conn, ts=plants.now_ts(), liters=0, items=watering.items_for(conn, rezept, date.today()),
+            plant_liters={plant_id: plants.parse_decimal(liters)},
+            ph=plants.parse_decimal(ph) if ph.strip() else None, ec=plants.parse_decimal(ec) if ec.strip() else None)
+    except ValueError as e:
+        return _plant_water_page(request, conn, plant_id, 400, str(e), {"liters": liters, "rezept": rezept, "ph": ph, "ec": ec})
+    return redirect(request, f"/?gegossen={wid}")
 
 
 @router.get("/notiz")

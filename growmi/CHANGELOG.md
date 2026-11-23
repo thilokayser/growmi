@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.27.0
+- Water a single plant straight from the overview: a drop button on every plant card opens a sheet with liters (the plant's last amount), recipe with the resulting ml, and optional pH/EC. A short "Undo" appears after saving.
+- The plant card shows the last amount ("yesterday · 1.5 L") and highlights plants that are overdue by your own watering rhythm.
+- The top button is now "Water all": tick the plants, one amount and one recipe for all, an own amount per plant if needed. Plants already watered today start unticked. The recipe's ml are computed on the server.
+- The QR quick page waters only its plant.
+
 ## 0.26.0
 - Editing a watering changes liters and fertilizer per plant (prices recorded then stay).
 - One field fills the liters of all plants at once.

@@ -35,8 +35,7 @@ def _quick(request, conn, plant_id, status=200, error=None, form=None):
     plan = plan if plan["source"] == "plan" else None
     return render(request, "schnell.html", status, p=p, active_slot=p["slot"], error=error, ok=request.query_params.get("ok"), plan=plan, tags=entries.TAGS,
                   liters=form.get("liters") or (f"{last['liters']:g}" if last else ""), recipes=recipes,
-                  rezept=form.get("rezept") or ("plan" if plan else box), due=due, phase=plants.current_phase(conn, plant_id),
-                  others=len(plants.occupied_plants(conn, plants.now_ts())) - 1)
+                  rezept=form.get("rezept") or ("plan" if plan else box), due=due, phase=plants.current_phase(conn, plant_id))
 
 
 @router.get("/pflanze/{plant_id}/schnell")
@@ -46,14 +45,12 @@ def quick_page(request: Request, plant_id: int, conn=Depends(get_conn)):
 
 @router.post("/pflanze/{plant_id}/schnell/giessen")
 def quick_water(request: Request, plant_id: int, liters: str = Form(""), rezept: str = Form("wasser"),
-                scope: str = Form("all"), conn=Depends(get_conn)):
+                conn=Depends(get_conn)):
     _plant_or_404(conn, plant_id)
     try:
         items = watering.items_for(conn, rezept, datetime.now().date())
-        amount = plants.parse_decimal(liters)  # per plant
-        ids = [plant_id] if scope == "only" else plants.occupied_plants(conn, plants.now_ts())
         watering.add_watering(conn, ts=plants.now_ts(), liters=0, items=items,
-                              plant_liters={pid: amount for pid in ids})
+                              plant_liters={plant_id: plants.parse_decimal(liters)})
     except ValueError as e:
         return _quick(request, conn, plant_id, 400, str(e), {"liters": liters, "rezept": rezept})
     return redirect(request, f"/pflanze/{plant_id}/schnell?ok=giessen")

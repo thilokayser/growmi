@@ -12,7 +12,7 @@ def test_canopy_grows_with_age_and_is_clamped():
 
 
 def cell(html: str, slot: int) -> str:
-    return re.search(rf'<a class="slot[^"]*"[^>]*data-slot="{slot}".*?</a>', html, re.S).group(0)
+    return re.search(rf'<(?:a|div) class="slot[^"]*"[^>]*data-slot="{slot}".*?</(?:a|div)>', html, re.S).group(0)
 
 
 def test_slots_are_placed_front_left_to_back_right(web):

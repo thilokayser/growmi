@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.28.0
+- New look for the whole app: deep navy background with soft color glows, rounder glass-like cards, bigger headings, pastel pill buttons and round icon badges on the live tiles of the overview. Light theme follows the same style.
+
 ## 0.27.0
 - Water a single plant straight from the overview: a drop button on every plant card opens a sheet with liters (the plant's last amount), recipe with the resulting ml, and optional pH/EC. A short "Undo" appears after saving.
 - The plant card shows the last amount ("yesterday · 1.5 L") and highlights plants that are overdue by your own watering rhythm.

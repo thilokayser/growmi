@@ -124,16 +124,12 @@ def themes():
     light_at = css.index("prefers-color-scheme: light")
     dark = parse_tokens(css[:light_at])
     light = {**dark, **parse_tokens(css[light_at:])}
-    return {"mocha": dark, "latte": light}
+    return {"dark": dark, "light": light}
 
 
-def test_css_only_uses_catppuccin_palette():
-    palette = set("""f5e0dc f2cdcd f5c2e7 cba6f7 f38ba8 eba0ac fab387 f9e2af a6e3a1 94e2d5 89dceb 74c7ec 89b4fa b4befe
-        cdd6f4 bac2de a6adc8 9399b2 7f849c 6c7086 585b70 45475a 313244 1e1e2e 181825 11111b
-        dc8a78 dd7878 ea76cb 8839ef d20f39 e64553 fe640b df8e1d 40a02b 179299 04a5e5 209fb5 1e66f5 7287fd
-        4c4f69 5c5f77 6c6f85 7c7f93 8c8fa1 9ca0b0 acb0be bcc0cc ccd0da eff1f5 e6e9ef dce0e8""".split())
-    used = {h.lower() for h in re.findall(r"#([0-9a-fA-F]{6})\b", CSS.read_text())}
-    assert used <= palette, used - palette
+def test_css_hex_colors_live_only_in_token_blocks():
+    css = CSS.read_text()
+    assert len(re.findall(r"#[0-9a-fA-F]{6}\b", css)) == len(re.findall(r"--[\w-]+:\s*#[0-9a-fA-F]{6}\b", css))
 
 
 def test_theme_contrast_meets_wcag():

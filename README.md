@@ -11,12 +11,14 @@ Plant journal, history and analysis for your grow tent, as a Home Assistant add-
 ## Features
 
 - **Spots and plants** (1 to 8 spots): every plant has its own phase and dates. Strains and breeders are reusable templates, plants are autoflower or photoperiod.
-- **Watering log** with fertilizer recipes per box phase and per week, price snapshots, stock, shopping list and reminders learned from your own rhythm.
-- **Journal**: notes with problem tags, interventions, photos and a photo comparison per week.
-- **Harvest and analysis**: yield, rating and drying per plant, then yield per strain against water, fertilizer, energy and cost.
-- **Climate**: live values, daily history per phase, VPD heatmap and a weekly report.
+- **Watering log**: water a single plant from the overview with one tap (liters, recipe, optional pH/EC, with undo), or "Water all" for the whole tent at once. Fertilizer recipes per box phase and per week, price snapshots, stock, shopping list and reminders learned from your own rhythm.
+- **Journal**: notes with problem tags, interventions, photos and a photo comparison per week. The photo's own EXIF time is used when it has one. Photos can also be added later, even for harvested plants.
+- **Harvest and analysis**: yield, rating and drying per plant, then yield per strain against water, fertilizer, energy and cost. Filter by finished or growing plants, and a postcard view with the latest photo of each plant.
+- **Plant nicknames** (optional, off by default): give a plant a name like "Chronic Carl" instead of the strain name, the strain stays next to it.
+- **Climate**: live values, 24-hour charts with a shaded target band per box phase (VPD, temperature, humidity), daily history per phase, VPD heatmap and a weekly report.
 - **Cockpit**: alarms, device state and operating hours, fan and exhaust modes, maintenance mode, tasks per phase.
 - **QR tags and kiosk display** (opt-in): one quick page per pot without login, a read-only display for an old phone at the tent.
+- **Desktop sidebar** (from a window width of about 60 rem): all pages on the left, and the settings sections as jump links on the settings page.
 - **Settings page**: every entity, device and spot name is configurable and testable. A feature without an entity stays hidden.
 - German and English UI, dark and light theme, mobile first.
 - **Backup**: nightly copy with photos, and a restore page for a rebuilt Home Assistant.
@@ -28,6 +30,10 @@ Plant journal, history and analysis for your grow tent, as a Home Assistant add-
 <img src="docs/screenshots/pflanze.png" alt="Plant page with journal and totals" width="23%">
 <img src="docs/screenshots/cockpit.png" alt="Cockpit with alarms, devices and modes" width="23%">
 <img src="docs/screenshots/heatmap.png" alt="Climate heatmap" width="23%">
+</p>
+
+<p align="center">
+<img src="docs/screenshots/auswertung-desktop.png" alt="Analysis on desktop with sidebar and postcards" width="80%">
 </p>
 
 *Demo data, invented for this page.*
@@ -74,7 +80,7 @@ Growmi ist Pflanzentagebuch, Verlauf und Auswertung für dein Grow-Zelt als Home
 
 > **Stand:** Der Autor nutzt es täglich an einem Zelt (Home Assistant 2026.10, amd64). Andere Setups sind ungetestet, `aarch64` wird gebaut, ist aber nicht geprüft. Keine Gewähr, siehe [Lizenz](LICENSE).
 
-**Funktionen:** 1 bis 8 Plätze mit eigenen Pflanzenphasen, Sorten und Hersteller als Vorlagen, Gießen mit Düngerrezepten je Box-Phase und Woche, Notizen mit Problem-Tags, Fotos und Fotovergleich, Ernte und Auswertung (Ertrag je Sorte gegen Wasser, Dünger, Strom und Kosten), Klima-Verlauf mit VPD-Heatmap, Cockpit mit Alarmen, Modi und Wartungsmodus, QR-Tags und Kiosk-Anzeige (optional), Einstellungsseite für alle Entities, Deutsch und Englisch, dunkel und hell, nächtliche Sicherung mit Fotos und Wiederherstellen.
+**Funktionen:** 1 bis 8 Plätze mit eigenen Pflanzenphasen, Sorten und Hersteller als Vorlagen, Gießen je Pflanze direkt auf der Startseite oder für alle auf einmal, mit Düngerrezepten je Box-Phase und Woche, Notizen mit Problem-Tags, Fotos (Aufnahmezeit aus EXIF) und Fotovergleich, Ernte und Auswertung (Ertrag je Sorte gegen Wasser, Dünger, Strom und Kosten, Filter fertig/wachsend, Postkarten-Ansicht), optionale Spitznamen für Pflanzen, Klima-Verlauf mit Zielbändern je Phase und VPD-Heatmap, Desktop-Seitenleiste, Cockpit mit Alarmen, Modi und Wartungsmodus, QR-Tags und Kiosk-Anzeige (optional), Einstellungsseite für alle Entities, Deutsch und Englisch, dunkel und hell, nächtliche Sicherung mit Fotos und Wiederherstellen.
 
 **Installieren:** In Home Assistant **Einstellungen → Add-ons → Add-on-Store → ⋮ → Repositories** und `https://github.com/thilokayser/growmi` hinzufügen, **Growmi** installieren (der erste Bau dauert ein paar Minuten), starten, „In Seitenleiste anzeigen“ einschalten. Dann in Growmi unter **Einstellungen** die Entities zuordnen. Hilfsmittel und Blueprints stehen in [docs/ha-setup.md](docs/ha-setup.md), Tags und Kiosk in [docs/qr-tags.md](docs/qr-tags.md).
 

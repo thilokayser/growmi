@@ -24,7 +24,7 @@ def _chart(ha, entity: str | None, title: str, unit: str, now: datetime, band: t
     return out
 
 
-def build(ha, conn, options: dict, now: datetime) -> dict:
+def status(ha, conn, now: datetime, reminder_days: int) -> dict:
     temp = events._float(config.state(ha, "temp"))
     battery = events._float(config.state(ha, "battery"))
     online = config.state(ha, "online")
@@ -41,7 +41,13 @@ def build(ha, conn, options: dict, now: datetime) -> dict:
     maintenance = config.state(ha, "maintenance") == "active"
     if maintenance:
         alerts.append(tr("Wartungsmodus aktiv: Abluft, Ventilator und Alarme pausieren"))
-    alerts += jobs.water_reminders(conn, now, jobs.reminder_days(conn, now, options))
+    alerts += jobs.water_reminders(conn, now, reminder_days)
+    return {"temperature": temp, "mode": mode, "online": online, "maintenance": maintenance, "alerts": alerts,
+            "battery": f"{battery:.0f}" if battery is not None else None}
+
+
+def build(ha, conn, options: dict, now: datetime) -> dict:
+    current = status(ha, conn, now, jobs.reminder_days(conn, now, options))
     energy = config.entity("energy") or options.get("energy_entity")
     kwh = None
     if energy:
@@ -55,11 +61,11 @@ def build(ha, conn, options: dict, now: datetime) -> dict:
     return {
         "devices": [{"name": d["name"], "on": None if not d.get("entity") or (s := ha.state(d["entity"])) is None else s == "on"}
                     for d in config.devices()],
-        "mode": mode, "modes": MODES, "exhaust_mode": config.state(ha, "exhaust_mode"), "exhaust_modes": EXHAUST_MODES, "maintenance": maintenance, "online": online,
-        "battery": f"{battery:.0f}" if battery is not None else None,
+        **current,
+        "modes": MODES, "exhaust_mode": config.state(ha, "exhaust_mode"), "exhaust_modes": EXHAUST_MODES,
         "has_fan": bool(config.entity("fan_mode")), "has_exhaust": bool(config.entity("exhaust_mode")),
         "has_maintenance": bool(config.entity("maintenance")), "has_battery": bool(config.entity("battery")),
-        "alerts": alerts, "tasks": tasks.due_tasks(conn, now.date()),
+        "tasks": tasks.due_tasks(conn, now.date()),
         "charts": [c for c in (charts["temp"], charts["rh"], charts["vpd"]) if c],
         "ranges": {k: f"{c['min']:g} – {c['max']:g}" for k, c in charts.items() if c},
         "kwh": f"{kwh:.2f}" if kwh is not None else None,

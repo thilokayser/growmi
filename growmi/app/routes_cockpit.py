@@ -15,7 +15,7 @@ def _page(request, conn, status=200, error=None):
     data = cockpit.build(request.app.state.ha, conn, request.app.state.options, datetime.now())
     ha = request.app.state.ha
     box = config.state(ha, "phase") or jobs.last_box_phase(conn)
-    return render(request, "cockpit.html", status, error=error, live=live_values(ha, box), **data)
+    return render(request, "cockpit.html", status, error=error, live=live_values(ha, box, data), **data)
 
 
 @router.get("/cockpit")

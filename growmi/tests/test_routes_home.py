@@ -1,9 +1,10 @@
 import io
 import os
+from datetime import date, timedelta
 
 from PIL import Image
 
-from app import plants, watering
+from app import config, i18n, plants, tasks, watering
 
 
 def seed_plant(web, slot, sorte="Northern Lights", phase="Wachstum"):
@@ -38,6 +39,49 @@ def test_home_water_liters_shown(web):
     watering.add_watering(c, ts="2026-10-20T12:00", liters=3.0, items=[])
     c.close()
     assert web.client.get("/").text.count("1.5 L") == 4  # per plant: total so far and last amount
+
+
+def test_home_rounds_display_amount_without_changing_watering_default(web):
+    pid = seed_plant(web, 1)
+    c = web.conn()
+    watering.add_watering(c, ts=plants.now_ts(), liters=0.533333, items=[], plant_ids=[pid])
+    c.close()
+    page = web.client.get("/").text
+    assert '<span class="water-amount">0.533 L</span>' in page
+    assert 'data-liters="0.533333"' in page
+
+
+def test_home_today_summary_links_to_cockpit_without_loading_history(web):
+    pid = seed_plant(web, 1)
+    today = date.today()
+    c = web.conn()
+    watering.add_watering(c, ts=plants.now_ts(), liters=1, items=[], plant_ids=[pid])
+    tasks.add_custom(c, pid, "Heute prüfen", today)
+    tasks.add_custom(c, pid, "Morgen prüfen", today + timedelta(days=1))
+    c.close()
+    web.ha.states[config.entity("online")] = "off"
+    prefix = "/api/hassio_ingress/abc"
+    page = web.client.get("/", headers={"X-Ingress-Path": prefix}).text
+    assert page.index('id="home-today"') < page.index('id="home-plants"') < page.index('id="home-climate"')
+    assert f'href="{prefix}/cockpit#heute">1 Aufgabe fällig</a>' in page
+    assert f'href="{prefix}/cockpit#alarme">1 Meldung</a>' in page
+    assert web.ha.history_calls == []
+
+    cockpit = web.client.get("/cockpit").text
+    assert 'id="heute"' in cockpit and "Heute prüfen" in cockpit and "Morgen prüfen" not in cockpit
+    assert 'id="alarme"' in cockpit and "Klimasensor offline" in cockpit
+
+    config.save(web.conn(), {**config.EXAMPLE, "lang": "en"})
+    i18n.set_lang("en")
+    page = web.client.get("/").text
+    assert '>Today</h2>' in page and '>Climate details</h2>' in page
+    assert '>1 task due</a>' in page and '>1 alert</a>' in page
+
+
+def test_home_today_shows_empty_state_without_links(web):
+    page = web.client.get("/").text
+    assert "Nichts fällig." in page
+    assert "/cockpit#heute" not in page and "/cockpit#alarme" not in page
 
 
 def test_giessen_form_preselects_current_box_phase_recipe(web):

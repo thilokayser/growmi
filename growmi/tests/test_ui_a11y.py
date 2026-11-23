@@ -79,6 +79,15 @@ def test_auswertung_cells_have_data_labels(web):
         assert f'data-label="{label}"' in t
 
 
+def test_mobile_tab_bar_is_scoped_to_app_navigation(web):
+    page = web.client.get("/auswertung").text
+    assert page.count('<nav class="app-nav"') == 1
+    assert page.count('<nav class="segmented"') == 2
+    css = CSS.read_text()
+    assert re.search(r"\.app-nav\s*\{\s*position:\s*fixed", css)
+    assert not re.search(r"(?<![\w.-])nav\s*\{[^}]*position:\s*fixed", css)
+
+
 def upload(web, pid):
     buf = io.BytesIO()
     Image.new("RGB", (3000, 2000), "green").save(buf, "PNG")

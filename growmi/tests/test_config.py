@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 
 import pytest
 
@@ -170,7 +171,7 @@ def test_slot_count_six(web):
 
 def test_layout_matches_legacy_for_four(conn):
     from app import routes_home
-    cards = {c["slot"]: (c["pos"], c["row"], c["col"]) for c in routes_home.slot_cards(conn)}
+    cards = {c["slot"]: (c["pos"], c["row"], c["col"]) for c in routes_home.slot_cards(conn, datetime.now(), 4)}
     assert cards == {1: ("vorne links", 2, 1), 2: ("vorne rechts", 2, 2), 3: ("hinten links", 1, 1),
                      4: ("hinten rechts", 1, 2)}
 
@@ -178,7 +179,7 @@ def test_layout_matches_legacy_for_four(conn):
 def test_layout_for_five_slots(conn):
     from app import routes_home
     config.current = {**config.EXAMPLE, "slots": list("abcde")}
-    cards = {c["slot"]: (c["row"], c["col"]) for c in routes_home.slot_cards(conn)}
+    cards = {c["slot"]: (c["row"], c["col"]) for c in routes_home.slot_cards(conn, datetime.now(), 4)}
     assert cards == {1: (3, 1), 2: (3, 2), 3: (2, 1), 4: (2, 2), 5: (1, 1)}
 
 

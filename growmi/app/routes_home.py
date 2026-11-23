@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 
-from . import calc, config, entries, heatmap, images, jobs, phase_link, plants, watering
+from . import calc, cockpit, config, entries, heatmap, images, jobs, phase_link, plants, tasks, watering
 from .routes_plants import _plant_or_404
 from .web import get_conn, redirect, render
 from .i18n import tr
@@ -40,9 +40,7 @@ def last_liters(conn, plant_id: int) -> float | None:
     return row["liters"] if row and row["liters"] else None
 
 
-def slot_cards(conn, options: dict | None = None) -> list[dict]:
-    now = datetime.now()
-    limit = jobs.reminder_days(conn, now, options or {})
+def slot_cards(conn, now: datetime, reminder_days: int) -> list[dict]:
     cards = []
     for slot in config.slots():
         pid = plants.slot_occupant(conn, slot)
@@ -60,8 +58,9 @@ def slot_cards(conn, options: dict | None = None) -> list[dict]:
         cards.append({**place, "plant": p, "canopy": canopy_pct(age), "phase": plants.current_phase(conn, pid),
                       "phase_day": _days(ab, now) + 1, "age_days": age, "week": age // 7 + 1,
                       "water_l": calc.plant_totals(conn, pid).water_l,
-                      "water_ago": _ago(since) + (f" · {liters:g} L" if since is not None and liters else ""),
-                      "last_l": f"{liters:g}" if liters else "", "thirsty": since is None or since >= limit})
+                       "water_ago": _ago(since),
+                       "last_l_display": f"{liters:.3f}".rstrip("0").rstrip(".") if liters else "",
+                       "last_l": f"{liters:g}" if liters else "", "thirsty": since is None or since >= reminder_days})
     return cards
 
 
@@ -70,22 +69,24 @@ def occupied_now(conn) -> list:
     return [conn.execute("SELECT id, slot, sorte FROM plant WHERE id=?", (i,)).fetchone() for i in ids]
 
 
-def _num(ha, key: str, digits: int) -> str | None:
+def _num(value, digits: int) -> str | None:
     try:
-        return f"{float(config.state(ha, key)):.{digits}f}".rstrip("0").rstrip(".") if digits else f"{float(config.state(ha, key)):.0f}"
+        number = float(value)
+        return f"{number:.{digits}f}".rstrip("0").rstrip(".") if digits else f"{number:.0f}"
     except (TypeError, ValueError):
         return None
 
 
-def live_values(ha, box_phase: str | None) -> dict:
-    vpd = _num(ha, "vpd", 2)
+def live_values(ha, box_phase: str | None, current: dict | None = None) -> dict:
+    vpd = _num(config.state(ha, "vpd"), 2)
     band = heatmap.band(box_phase)
     status = None
     if vpd and band:
         status = "ok" if band[0] <= float(vpd) <= band[1] else "warn"
-    temp, rh = _num(ha, "temp", 1), _num(ha, "rh", 0)
+    temp = _num(current["temperature"] if current is not None else config.state(ha, "temp"), 1)
+    rh = _num(config.state(ha, "rh"), 0)
     pct = lambda v, lo, hi: round(min(max((float(v) - lo) / (hi - lo), 0), 1) * 100) if v else 0  # bar fill: scale of the gauge
-    online = config.state(ha, "online")
+    online = current["online"] if current is not None else config.state(ha, "online")
     return {"phase": box_phase or config.state(ha, "phase") or "–",
             "temp": temp, "rh": rh, "temp_pct": pct(temp, 15, 35), "rh_pct": pct(rh, 0, 100), "vpd_pct": pct(vpd, 0, 2.5),
             "online": None if online is None else online == "on",
@@ -95,13 +96,18 @@ def live_values(ha, box_phase: str | None) -> dict:
 
 @router.get("/")
 def home(request: Request, gegossen: int | None = None, conn=Depends(get_conn)):
-    box = config.state(request.app.state.ha, "phase") or jobs.last_box_phase(conn)
-    cards = slot_cards(conn, request.app.state.options)
-    pw = jobs.phase_week(conn, date.today())
+    ha = request.app.state.ha
+    now = datetime.now()
+    today = now.date()
+    reminder_days = jobs.reminder_days(conn, now, request.app.state.options)
+    box = config.state(ha, "phase") or jobs.last_box_phase(conn)
+    cards = slot_cards(conn, now, reminder_days)
+    pw = jobs.phase_week(conn, today)
+    status = cockpit.status(ha, conn, now, reminder_days)
     return render(request, "home.html", cards=cards, plant_count=sum(1 for c in cards if c["plant"]),
-                  week=pw[1] if pw else None, live=live_values(request.app.state.ha, box), undo=_recent_watering(conn, gegossen),
-                  water=water_options(conn),
-                  phase_suggestion=phase_link.suggestion(conn, request.app.state.ha, date.today()), back="/")
+                  week=pw[1] if pw else None, live=live_values(ha, box, status), undo=_recent_watering(conn, gegossen),
+                  due_count=len(tasks.due_tasks(conn, today)), alert_count=len(status["alerts"]), water=water_options(conn),
+                  phase_suggestion=phase_link.suggestion(conn, ha, today), back="/")
 
 
 def _recent_watering(conn, wid: int | None):

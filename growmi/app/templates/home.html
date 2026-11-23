@@ -4,35 +4,24 @@
 {% block title %}Zelt{% endblock %}
 {% block content %}
 <h1>Zelt</h1>
+<section class="home-today" aria-labelledby="home-today">
+  <h2 id="home-today">Heute</h2>
+  {% if due_count %}
+  <a href="{{ root }}/cockpit#heute">{% if due_count == 1 %}1 Aufgabe fällig{% else %}{{ due_count }} Aufgaben fällig{% endif %}</a>
+  {% endif %}
+  {% if alert_count %}
+  <a href="{{ root }}/cockpit#alarme">{% if alert_count == 1 %}1 Meldung{% else %}{{ alert_count }} Meldungen{% endif %}</a>
+  {% endif %}
+  {% if not due_count and not alert_count %}<span class="muted">Nichts fällig.</span>{% endif %}
+</section>
 {% if undo %}<div class="all-clear" role="status"><strong>{{ undo.sorte }}</strong> <span>Gegossen.</span>
   <form class="inline-form" method="post" action="{{ root }}/eintrag/watering/{{ undo.id }}/loeschen"><input type="hidden" name="back" value="/"><button class="btn ghost">Rückgängig</button></form></div>{% endif %}
-{% include "_phase_banner.html" %}
-{% if live.has.values()|select|list %}<section class="card hero" aria-label="Aktuelle Werte">
-  <div class="card-head">
-    <span class="ico c-phase">{{ icon('sprout') }}</span>
-    <div class="card-titles">
-      <h2 class="card-title">{% if live.has.phase %}{{ tr(live.phase) }}{% else %}Klima{% endif %}</h2>
-      <p class="card-sub">{% if week %}Woche {{ week }} · {% endif %}{{ plant_count }} Pflanzen</p>
-    </div>
-    {% if live.online is not none %}<span class="pill {{ 'ok' if live.online else 'bad' }}"><i></i>{{ 'Online' if live.online else 'Offline' }}</span>{% endif %}
-  </div>
-  <div class="stats">
-    {% if live.has.temp %}<div class="stat c-temp"><span class="stat-value num">{{ live.temp or '–' }}{% if live.temp %}<small>°C</small>{% endif %}</span>
-      <span class="gauge" aria-hidden="true"><i style="width:{{ live.temp_pct }}%"></i></span><span class="stat-label">Temperatur</span></div>{% endif %}
-    {% if live.has.rh %}<div class="stat c-rh"><span class="stat-value num">{{ live.rh or '–' }}{% if live.rh %}<small>%</small>{% endif %}</span>
-      <span class="gauge" aria-hidden="true"><i style="width:{{ live.rh_pct }}%"></i></span><span class="stat-label">Luftfeuchte</span></div>{% endif %}
-    {% if live.has.vpd %}<div class="stat c-vpd"><span class="stat-value num">{{ live.vpd or '–' }}{% if live.vpd %}<small>kPa</small>{% endif %}</span>
-      <span class="gauge" aria-hidden="true"><i style="width:{{ live.vpd_pct }}%"></i></span>
-      <span class="stat-label">VPD{% if live.vpd_status %} · {{ tr('im Ziel') if live.vpd_status == 'ok' else tr('außerhalb') }}{% endif %}</span></div>{% endif %}
-  </div>
-</section>{% endif %}
+<h2 class="card-title section-title" id="home-plants">Pflanzen</h2>
 <div class="quick-pills">
   <a class="pill-btn" href="{{ root }}/giessen"><span class="ico c-rh">{{ icon('droplet') }}</span>Alle gießen</a>
   <a class="pill-btn" href="{{ root }}/notiz"><span class="ico c-vpd">{{ icon('note') }}</span>Notiz</a>
   <a class="pill-btn" href="{{ root }}/foto"><span class="ico c-temp">{{ icon('camera') }}</span>Foto</a>
-  <a class="pill-btn" href="{{ root }}/fotos"><span class="ico c-phase">{{ icon('sprout') }}</span>Fotovergleich</a>
 </div>
-<h2 class="card-title section-title">Pflanzen</h2>
 <div class="tent" role="group" aria-label="Zelt von oben: hinten oben, vorne unten">
   <p class="tent-edge">Hinten</p>
   <div class="tent-grid">
@@ -45,7 +34,7 @@
       <span class="sorte">{{ nick(c.plant) }}</span>{% if nick(c.plant) != c.plant.sorte %}<small>{{ c.plant.sorte }}</small>{% endif %}
       <span class="chip ph-{{ c.phase }}">{{ tr(c.phase) }}</span>{% if c.plant.typ %}<small>{{ c.plant.typ|typ }}</small>{% endif %}
       <small class="num">Tag {{ c.phase_day }} in dieser Phase</small>
-      <small class="num">{{ c.water_ago }}</small>
+      <small class="num">{{ c.water_ago }}{% if c.last_l_display %} · <span class="water-amount">{{ c.last_l_display }} L</span>{% endif %}</small>
       <small class="num">Woche {{ c.week }} · {{ c.age_days }} Tage alt · {{ '%g' % (c.water_l|round(1)) }} L</small>
       </a>
       <a class="water-btn" href="{{ root }}/pflanze/{{ c.plant.id }}/giessen" data-name="{{ c.plant.sorte }}" data-liters="{{ c.last_l }}" aria-label="{{ tr('Gießen') }}: {{ c.plant.sorte }}">{{ icon('droplet') }}</a>
@@ -61,6 +50,30 @@
   </div>
   <p class="tent-edge">Vorne</p>
 </div>
+<p class="home-photo-link"><a href="{{ root }}/fotos">Fotovergleich</a></p>
+{% if live.has.values()|select|list or phase_suggestion %}
+<h2 id="home-climate" class="card-title section-title">Klima-Details</h2>
+{% include "_phase_banner.html" %}
+{% if live.has.values()|select|list %}<section class="card hero" aria-label="Aktuelle Werte">
+  <div class="card-head">
+    <span class="ico c-phase">{{ icon('sprout') }}</span>
+    <div class="card-titles">
+      <h3 class="card-title">{% if live.has.phase %}{{ tr(live.phase) }}{% else %}Klima{% endif %}</h3>
+      <p class="card-sub">{% if week %}Woche {{ week }} · {% endif %}{{ plant_count }} Pflanzen</p>
+    </div>
+    {% if live.online is not none %}<span class="pill {{ 'ok' if live.online else 'bad' }}"><i></i>{{ 'Online' if live.online else 'Offline' }}</span>{% endif %}
+  </div>
+  <div class="stats">
+    {% if live.has.temp %}<div class="stat c-temp"><span class="stat-value num">{{ live.temp or '–' }}{% if live.temp %}<small>°C</small>{% endif %}</span>
+      <span class="gauge" aria-hidden="true"><i style="width:{{ live.temp_pct }}%"></i></span><span class="stat-label">Temperatur</span></div>{% endif %}
+    {% if live.has.rh %}<div class="stat c-rh"><span class="stat-value num">{{ live.rh or '–' }}{% if live.rh %}<small>%</small>{% endif %}</span>
+      <span class="gauge" aria-hidden="true"><i style="width:{{ live.rh_pct }}%"></i></span><span class="stat-label">Luftfeuchte</span></div>{% endif %}
+    {% if live.has.vpd %}<div class="stat c-vpd"><span class="stat-value num">{{ live.vpd or '–' }}{% if live.vpd %}<small>kPa</small>{% endif %}</span>
+      <span class="gauge" aria-hidden="true"><i style="width:{{ live.vpd_pct }}%"></i></span>
+      <span class="stat-label">VPD{% if live.vpd_status %} · {{ tr('im Ziel') if live.vpd_status == 'ok' else tr('außerhalb') }}{% endif %}</span></div>{% endif %}
+  </div>
+</section>{% endif %}
+{% endif %}
 <dialog id="water-dialog" class="sheet" aria-labelledby="water-title">
   <h2 id="water-title"></h2>
   {{ water_form('', '', water.rezept, water) }}

@@ -14,11 +14,11 @@
   <header class="appbar">
     {% if public %}<span class="brand">{{ icon('sprout') }}<span>Growmi</span></span>{% else %}<a class="brand" href="{{ root }}/">{{ icon('sprout') }}<span>Growmi</span></a>{% endif %}
     {% if public %}
-    <nav aria-label="Plätze">
+    <nav class="app-nav" aria-label="Plätze">
       {% for n in slots() %}<a href="{{ root }}/platz/{{ n }}"{% if active_slot == n %} aria-current="page"{% endif %}>{{ icon('sprout') }}<span>Platz {{ n }}</span></a>{% endfor %}
       <a href="{{ root }}/kiosk">{{ icon('gauge') }}<span>Anzeige</span></a>
     </nav>
-    {% else %}<nav aria-label="Hauptnavigation">
+    {% else %}<nav class="app-nav" aria-label="Hauptnavigation">
       {% for key, label, path, ic in [("start", tr("Zelt"), "/", "tent"), ("cockpit", tr("Cockpit"), "/cockpit", "gauge"), ("verlauf", tr("Verlauf"), "/verlauf", "activity"), ("auswertung", tr("Auswertung"), "/auswertung", "chart"), ("stammdaten", tr("Stammdaten"), "/stammdaten", "database"), ("einstellungen", tr("Einstellungen"), "/einstellungen", "sliders")] %}
       <a href="{{ root }}{{ path }}"{% if active == key %} aria-current="page"{% endif %}>{{ icon(ic) }}<span>{{ label }}</span></a>
       {% endfor %}

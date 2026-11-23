@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.11
+- Mobile: analysis filters and view controls no longer overlap the bottom navigation.
+- Tent overview: see due tasks and alerts first, then plants and climate details. The summary links directly to the cockpit.
+
 ## 0.28.10
 - Desktop: the content is centred in the space right of the sidebar instead of sticking to its edge.
 

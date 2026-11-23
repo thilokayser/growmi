@@ -155,7 +155,7 @@ def test_card_shows_last_amount_and_thirst(web):
     a, b = two(web)
     web.client.post(f"/pflanze/{a}/giessen", data={"liters": "1,5", "rezept": "wasser"})
     t = web.client.get("/").text
-    assert "heute gegossen · 1.5 L" in t
+    assert 'heute gegossen · <span class="water-amount">1.5 L</span>' in t
     card = lambda pid: re.search(rf'<div class="slot full[^"]*"(?:(?!</div>).)*?/pflanze/{pid}"', t, re.S).group(0)
     assert "thirsty" not in card(a) and "thirsty" in card(b)  # never watered counts as thirsty
 

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.28.10
+- Desktop: the content is centred in the space right of the sidebar instead of sticking to its edge.
+
 ## 0.28.9
 - Verlauf timeline: tap or click a marker (drop, note, …) to see what happened and on which day. Clustered markers list up to five entries.
 

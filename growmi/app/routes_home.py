@@ -83,8 +83,12 @@ def live_values(ha, box_phase: str | None) -> dict:
     status = None
     if vpd and band:
         status = "ok" if band[0] <= float(vpd) <= band[1] else "warn"
+    temp, rh = _num(ha, "temp", 1), _num(ha, "rh", 0)
+    pct = lambda v, lo, hi: round(min(max((float(v) - lo) / (hi - lo), 0), 1) * 100) if v else 0  # bar fill: scale of the gauge
+    online = config.state(ha, "online")
     return {"phase": box_phase or config.state(ha, "phase") or "–",
-            "temp": _num(ha, "temp", 1), "rh": _num(ha, "rh", 0),
+            "temp": temp, "rh": rh, "temp_pct": pct(temp, 15, 35), "rh_pct": pct(rh, 0, 100), "vpd_pct": pct(vpd, 0, 2.5),
+            "online": None if online is None else online == "on",
             "vpd": vpd, "vpd_status": status,
             "has": {k: bool(config.entity(k)) for k in ("phase", "temp", "rh", "vpd")}}
 
@@ -92,8 +96,10 @@ def live_values(ha, box_phase: str | None) -> dict:
 @router.get("/")
 def home(request: Request, gegossen: int | None = None, conn=Depends(get_conn)):
     box = config.state(request.app.state.ha, "phase") or jobs.last_box_phase(conn)
-    return render(request, "home.html", cards=slot_cards(conn, request.app.state.options),
-                  live=live_values(request.app.state.ha, box), undo=_recent_watering(conn, gegossen),
+    cards = slot_cards(conn, request.app.state.options)
+    pw = jobs.phase_week(conn, date.today())
+    return render(request, "home.html", cards=cards, plant_count=sum(1 for c in cards if c["plant"]),
+                  week=pw[1] if pw else None, live=live_values(request.app.state.ha, box), undo=_recent_watering(conn, gegossen),
                   water=water_options(conn),
                   phase_suggestion=phase_link.suggestion(conn, request.app.state.ha, date.today()), back="/")
 

@@ -1,11 +1,11 @@
 /* Dark (default, deep navy) and light theme. Hex colors live only in the token blocks (a test checks it). */
 :root {
   color-scheme: dark;
-  --bg: #0b1220; --bg-alt: #080d18; --card: #182136; --line: #2a3550;
-  --text: #f1f4fa; --muted: #9ba7bd; --border: #6a7894;
+  --bg: #1b2433; --bg-alt: #161d2a; --card: #222a37; --line: #2c3648;
+  --text: #f4f6f8; --muted: #9aa5b8; --border: #7a89a3;
   --accent: #a9e8c0; --on-accent: #0b1220; --danger: #f4a3b3; --on-danger: #0b1220;
   --link: #a9c4f7; --focus: #c9bcff;
-  --glow-a: #1f4f86; --glow-b: #1c6b64;
+  --glow-a: #34567d; --glow-b: #2a4f5c;
   --ph-keimling: #f5d98b; --on-keimling: #0b1220;
   --ph-wachstum: #a9e8c0; --on-wachstum: #0b1220;
   --ph-bluete: #c3b1f7; --on-bluete: #0b1220;
@@ -42,9 +42,9 @@
 }
 /* theme switch: data-theme is set by the toggle in the app bar (stored per device); without it the system decides */
 :root {
-  --radius: 1.4rem;
-  --surface: color-mix(in srgb, var(--card) 72%, transparent);
-  --hairline: color-mix(in srgb, var(--text) 10%, transparent);
+  --radius: 1.6rem;
+  --surface: color-mix(in srgb, var(--card) 88%, transparent);
+  --hairline: color-mix(in srgb, var(--text) 9%, transparent);
   --shadow: 0 1px 2px color-mix(in srgb, black 12%, transparent),
             0 18px 36px -22px color-mix(in srgb, black 55%, transparent);
   --glow: color-mix(in srgb, var(--accent) 14%, transparent);
@@ -55,8 +55,8 @@ html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; min-height: 100vh; color: var(--text); line-height: 1.5; font-size: 1rem;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; accent-color: var(--accent);
   caret-color: var(--accent); scrollbar-color: var(--border) var(--bg-alt);
-  background: radial-gradient(60rem 36rem at -5% -8%, color-mix(in srgb, var(--glow-a) 55%, transparent), transparent 65%),
-    radial-gradient(48rem 30rem at 105% 105%, color-mix(in srgb, var(--glow-b) 40%, transparent), transparent 65%), var(--bg);
+  background: radial-gradient(50rem 34rem at 0% 0%, var(--glow-a), transparent 72%),
+    radial-gradient(40rem 26rem at 100% 100%, color-mix(in srgb, var(--glow-b) 60%, transparent), transparent 70%), var(--bg);
   background-attachment: fixed; }
 ::selection { background: color-mix(in srgb, var(--accent) 35%, transparent); }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
@@ -69,8 +69,7 @@ table, .num { font-variant-numeric: tabular-nums; }
 
 /* app shell: brand bar on top, tab bar at the bottom on phones */
 .appbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between;
-  gap: 1rem; padding: .6rem 1rem; background: color-mix(in srgb, var(--bg) 80%, transparent);
-  border-bottom: 1px solid var(--hairline); }  /* no backdrop-filter here: it would trap the fixed tab bar */
+  gap: 1rem; padding: .6rem 1rem; background: transparent; }  /* no backdrop-filter here: it would trap the fixed tab bar */
 .brand { display: inline-flex; align-items: center; gap: .6rem; color: var(--text); text-decoration: none;
   font-weight: 700; letter-spacing: -.01em; font-size: 1.05rem; }
 .brand .i { width: 2.1rem; height: 2.1rem; padding: .42rem; border-radius: 50%; color: var(--on-accent); background: var(--accent); }
@@ -90,7 +89,7 @@ main { padding: 1.25rem 1rem 3rem; max-width: 48rem; margin: 0 auto; }
   main { padding-bottom: 6.5rem; }
 }
 
-h1 { font-size: 2.3rem; line-height: 1.1; font-weight: 700; letter-spacing: -.03em; margin: .25rem 0 1.2rem; text-wrap: balance; }
+h1 { font-size: 2.6rem; line-height: 1.08; font-weight: 650; letter-spacing: -.035em; margin: .25rem 0 1.2rem; text-wrap: balance; }
 h2 { font-size: 1.25rem; font-weight: 700; margin: 2rem 0 .6rem; letter-spacing: -.02em; }
 h3 { font-size: 1.02rem; margin: 1.25rem 0 .5rem; }
 p { max-width: 65ch; }
@@ -351,3 +350,30 @@ output { font-size: .9rem; }
 .tile-ico { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; margin-bottom: .35rem; border-radius: 50%;
   background: var(--c); color: var(--bg); }
 .c-phase { --c: var(--ph-wachstum); } .c-temp { --c: var(--ph-trocknung); } .c-rh { --c: var(--link); } .c-vpd { --c: var(--ph-bluete); }
+
+/* dashboard cards: round icon badge, big title, calm subtitle, pills */
+.card { padding: 1.3rem; border-radius: 1.9rem; background: var(--surface); border: 1px solid var(--hairline);
+  box-shadow: var(--shadow), inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent); margin-bottom: 1rem; }
+.card-head { display: flex; align-items: center; gap: .9rem; }
+.card-titles { flex: 1; min-width: 0; }
+.card-title { margin: 0; font-size: 1.6rem; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
+.card-sub { margin: .15rem 0 0; color: var(--muted); font-size: .95rem; }
+.section-title { margin: 1.6rem .2rem .7rem; }
+.ico { display: grid; place-items: center; flex: none; width: 2.9rem; height: 2.9rem; border-radius: 50%; background: var(--c); color: var(--bg); }
+.pill { display: inline-flex; align-items: center; gap: .45rem; padding: .35rem .85rem; border-radius: 999px; font-weight: 600; font-size: .9rem;
+  background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c); --c: var(--accent); }
+.pill i { width: .55rem; height: .55rem; border-radius: 50%; background: currentColor; }
+.pill.bad { --c: var(--danger); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: .7rem; margin-top: 1.1rem; }
+.stat { display: flex; flex-direction: column; gap: .55rem; padding: 1rem; border-radius: 1.3rem;
+  background: color-mix(in srgb, var(--bg-alt) 55%, transparent); border: 1px solid var(--hairline); }
+.stat-value { font-size: 2rem; font-weight: 500; letter-spacing: -.03em; line-height: 1; }
+.stat-value small { font-size: 1rem; color: var(--muted); margin-left: .1rem; }
+.bar { height: .35rem; border-radius: 999px; background: color-mix(in srgb, var(--text) 12%, transparent); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: inherit; background: var(--c); }
+.stat-label { color: var(--c); font-size: .9rem; }
+.quick-pills { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.pill-btn { display: flex; align-items: center; gap: .7rem; padding: .55rem 1rem .55rem .55rem; border-radius: 999px; min-width: 0;
+  background: var(--surface); border: 1px solid var(--hairline); color: var(--text); text-decoration: none; font-weight: 600; }
+.pill-btn .ico { width: 2.5rem; height: 2.5rem; }
+@media (min-width: 56rem) { main { max-width: 56rem; } }

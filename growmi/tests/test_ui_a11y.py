@@ -156,7 +156,7 @@ def test_home_shows_live_climate_tiles(web):
     web.ha.states.update({"input_select.grow_phase": "Wachstum", "sensor.growbox_temperatur": "22.84",
                           "sensor.growbox_luftfeuchtigkeit": "66.0", "sensor.growbox_vpd": "0.94"})
     t = web.client.get("/").text
-    assert 'class="tiles"' in t and "22.8" in t and "66" in t and "0.94" in t and "im Ziel" in t
+    assert 'class="card hero"' in t and "22.8" in t and "66" in t and "0.94" in t and "im Ziel" in t
     assert "Wachstum" in t
     web.ha.states["sensor.growbox_vpd"] = "1.9"
     assert "außerhalb" in web.client.get("/").text
@@ -164,7 +164,7 @@ def test_home_shows_live_climate_tiles(web):
 
 def test_home_tiles_survive_missing_ha_values(web):
     t = web.client.get("/").text
-    assert 'class="tiles"' in t and t.count("–") >= 3
+    assert 'class="card hero"' in t and t.count("–") >= 3
 
 
 def test_app_shell_has_brand_and_icon_nav(web):

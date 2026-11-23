@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.28.1
+- Overview follows the dashboard look: steel-blue to slate background, lighter cards, no bar under the app bar. Climate values sit in one card with an icon badge, status pill and bars; quick actions are pills.
+
 ## 0.28.0
 - New look for the whole app: deep navy background with soft color glows, rounder glass-like cards, bigger headings, pastel pill buttons and round icon badges on the live tiles of the overview. Light theme follows the same style.
 

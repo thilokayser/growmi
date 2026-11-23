@@ -168,6 +168,8 @@ EN: dict[str, str] = {
     "pH und EC": "pH and EC",
     "{0} · Gießen": "{0} · Watering",
     "Gießen": "Watering",
+    "Woche {0} ·": "Week {0} ·",
+    "{0} Pflanzen": "{0} plants",
     "Gießen eintragen": "Log watering",
     "Gilt für die ganze Installation. Bereits gespeicherte Ereignisse behalten die Sprache, in der sie entstanden sind.": "Applies to the whole installation. Events already saved keep the language they were created in.",
     "Grow-Kosten bisher": "Grow costs so far",

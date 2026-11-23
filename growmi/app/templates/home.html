@@ -7,19 +7,32 @@
 {% if undo %}<div class="all-clear" role="status"><strong>{{ undo.sorte }}</strong> <span>Gegossen.</span>
   <form class="inline-form" method="post" action="{{ root }}/eintrag/watering/{{ undo.id }}/loeschen"><input type="hidden" name="back" value="/"><button class="btn ghost">Rückgängig</button></form></div>{% endif %}
 {% include "_phase_banner.html" %}
-{% if live.has.values()|select|list %}<section class="tiles" aria-label="Aktuelle Werte">
-  {% if live.has.phase %}<div class="tile"><span class="tile-ico c-phase">{{ icon('sprout') }}</span><span class="tile-label">Box-Phase</span><span class="tile-value">{{ tr(live.phase) }}</span></div>{% endif %}
-  {% if live.has.temp %}<div class="tile"><span class="tile-ico c-temp">{{ icon('thermo') }}</span><span class="tile-label">Temperatur</span><span class="tile-value num">{{ live.temp or '–' }}{% if live.temp %}<small> °C</small>{% endif %}</span></div>{% endif %}
-  {% if live.has.rh %}<div class="tile"><span class="tile-ico c-rh">{{ icon('droplet') }}</span><span class="tile-label">Luftfeuchte</span><span class="tile-value num">{{ live.rh or '–' }}{% if live.rh %}<small> %</small>{% endif %}</span></div>{% endif %}
-  {% if live.has.vpd %}<div class="tile"><span class="tile-ico c-vpd">{{ icon('gauge') }}</span><span class="tile-label">VPD</span><span class="tile-value num">{{ live.vpd or '–' }}{% if live.vpd %}<small> kPa</small>{% endif %}</span>
-    {% if live.vpd_status %}<span class="tile-status {{ live.vpd_status }}"><i aria-hidden="true"></i>{{ tr('im Ziel') if live.vpd_status == 'ok' else tr('außerhalb') }}</span>{% endif %}</div>{% endif %}
+{% if live.has.values()|select|list %}<section class="card hero" aria-label="Aktuelle Werte">
+  <div class="card-head">
+    <span class="ico c-phase">{{ icon('sprout') }}</span>
+    <div class="card-titles">
+      <h2 class="card-title">{% if live.has.phase %}{{ tr(live.phase) }}{% else %}Klima{% endif %}</h2>
+      <p class="card-sub">{% if week %}Woche {{ week }} · {% endif %}{{ plant_count }} Pflanzen</p>
+    </div>
+    {% if live.online is not none %}<span class="pill {{ 'ok' if live.online else 'bad' }}"><i></i>{{ 'Online' if live.online else 'Offline' }}</span>{% endif %}
+  </div>
+  <div class="stats">
+    {% if live.has.temp %}<div class="stat c-temp"><span class="stat-value num">{{ live.temp or '–' }}{% if live.temp %}<small>°C</small>{% endif %}</span>
+      <span class="bar" aria-hidden="true"><i style="width:{{ live.temp_pct }}%"></i></span><span class="stat-label">Temperatur</span></div>{% endif %}
+    {% if live.has.rh %}<div class="stat c-rh"><span class="stat-value num">{{ live.rh or '–' }}{% if live.rh %}<small>%</small>{% endif %}</span>
+      <span class="bar" aria-hidden="true"><i style="width:{{ live.rh_pct }}%"></i></span><span class="stat-label">Luftfeuchte</span></div>{% endif %}
+    {% if live.has.vpd %}<div class="stat c-vpd"><span class="stat-value num">{{ live.vpd or '–' }}{% if live.vpd %}<small>kPa</small>{% endif %}</span>
+      <span class="bar" aria-hidden="true"><i style="width:{{ live.vpd_pct }}%"></i></span>
+      <span class="stat-label">VPD{% if live.vpd_status %} · {{ tr('im Ziel') if live.vpd_status == 'ok' else tr('außerhalb') }}{% endif %}</span></div>{% endif %}
+  </div>
 </section>{% endif %}
-<div class="actions">
-  <a class="btn" href="{{ root }}/giessen">{{ icon('droplet') }} Alle gießen</a>
-  <a class="btn" href="{{ root }}/notiz">{{ icon('note') }} Notiz</a>
-  <a class="btn" href="{{ root }}/foto">{{ icon('camera') }} Foto</a>
-  <a class="btn ghost" href="{{ root }}/fotos">Fotovergleich</a>
+<div class="quick-pills">
+  <a class="pill-btn" href="{{ root }}/giessen"><span class="ico c-rh">{{ icon('droplet') }}</span>Alle gießen</a>
+  <a class="pill-btn" href="{{ root }}/notiz"><span class="ico c-vpd">{{ icon('note') }}</span>Notiz</a>
+  <a class="pill-btn" href="{{ root }}/foto"><span class="ico c-temp">{{ icon('camera') }}</span>Foto</a>
+  <a class="pill-btn" href="{{ root }}/fotos"><span class="ico c-phase">{{ icon('sprout') }}</span>Fotovergleich</a>
 </div>
+<h2 class="card-title section-title">Pflanzen</h2>
 <div class="tent" role="group" aria-label="Zelt von oben: hinten oben, vorne unten">
   <p class="tent-edge">Hinten</p>
   <div class="tent-grid">

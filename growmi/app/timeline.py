@@ -59,4 +59,5 @@ def cluster_markers(markers: list[Marker], gap_pct: float = 3.0) -> list[Marker]
 def _merge(group: list[Marker]) -> Marker:
     if len(group) == 1:
         return group[0]
-    return Marker(group[0].left_pct, group[0].icon, tr("{n} Einträge", n=len(group)), len(group))
+    lines = [m.title for m in group[:5]] + ([f"+{len(group) - 5}"] if len(group) > 5 else [])  # a long cluster stays short
+    return Marker(group[0].left_pct, group[0].icon, "\n".join(lines), len(group))

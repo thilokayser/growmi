@@ -20,7 +20,7 @@
   <a href="{{ root }}/pflanze/{{ r.plant.id }}">Platz {{ r.plant.slot }} · {{ nick(r.plant) }}</a>
   <div class="track" aria-hidden="true">
     {% for b in r.bars %}<div class="bar ph-{{ b.phase }}" style="left:{{ b.left_pct }}%;width:{{ b.width_pct }}%"><span>{{ tr(b.phase) }}</span></div>{% endfor %}
-    {% for m in r.markers %}<span class="marker" style="left:{{ m.left_pct }}%" data-icon="{{ m.icon }}" title="{{ m.title }}">{{ icon(m.icon) }}{% if m.count > 1 %}<b>{{ m.count }}×</b>{% endif %}</span>{% endfor %}
+    {% for m in r.markers %}<button type="button" class="marker" style="left:{{ m.left_pct }}%" data-icon="{{ m.icon }}" aria-expanded="false" aria-label="{{ m.title|replace('\n', ', ') }}">{{ icon(m.icon) }}{% if m.count > 1 %}<b>{{ m.count }}×</b>{% endif %}<span class="marker-tip" role="tooltip">{% for line in m.title.split('\n') %}<span>{{ line }}</span>{% endfor %}</span></button>{% endfor %}
     {% if today_pct is not none and 0 <= today_pct <= 100 %}<div class="today" style="left:{{ today_pct }}%"></div>{% endif %}
   </div>
   <p class="tl-sum num">{{ r.summary }}</p>
@@ -43,4 +43,19 @@
 {% endif %}
 <p class="axis num"><span>{{ von|dt }}</span><span>{{ bis|dt }}</span></p>
 {% endif %}
+<script>
+(function () {  // one tooltip open at a time, a tap elsewhere closes it
+  var markers = document.querySelectorAll("button.marker");
+  function close() { markers.forEach(function (m) { m.classList.remove("open"); m.setAttribute("aria-expanded", "false"); }); }
+  markers.forEach(function (m) {
+    m.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = !m.classList.contains("open");
+      close();
+      if (open) { m.classList.add("open"); m.setAttribute("aria-expanded", "true"); }
+    });
+  });
+  document.addEventListener("click", close);
+})();
+</script>
 {% endblock %}

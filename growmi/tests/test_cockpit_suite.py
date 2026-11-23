@@ -384,3 +384,12 @@ def test_auswertung_postcards_and_photo_upload_for_harvested_plants(web):
     r = web.client.post("/foto", data={"plant_id": str(a), "ts": "2026-10-26T09:00", "back": "/auswertung?status=fertig"},
                         files={"datei": ("a.jpg", _jpeg_with_time(None), "image/jpeg")})
     assert r.status_code == 303 and r.headers["location"] == "/auswertung?status=fertig"
+
+
+def test_timeline_marker_tooltip_names_the_action_and_its_day(web):
+    pid = seed_plant(web, 1)
+    c = web.conn()
+    watering.add_watering(c, ts="2026-10-20T12:00", liters=2.0, items=[], plant_ids=[pid])
+    c.close()
+    t = web.client.get("/verlauf").text
+    assert 'class="marker-tip"' in t and "20.10. 2 L" in t

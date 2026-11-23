@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.28.9
+- Verlauf timeline: tap or click a marker (drop, note, …) to see what happened and on which day. Clustered markers list up to five entries.
+
 ## 0.28.8
 - Analysis: add photos to any plant, also harvested ones.
 - Analysis: filter Alle / Fertig / Im Wachstum, and a Postkarten view (photo, name, dry yield, water) next to the table.

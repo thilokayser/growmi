@@ -535,7 +535,6 @@ EN: dict[str, str] = {
     "{name} muss zwischen 0 und 100 liegen": "{name} must be between 0 and 100",
     "{name}: bitte 1 bis 5 wählen": "{name}: please choose 1 to 5",
     "{name}: {pct:.0f} % der Lebensdauer ({hours:.0f} von {limit:.0f} h), bald tauschen": "{name}: {pct:.0f} % of lifetime ({hours:.0f} of {limit:.0f} h), replace soon",
-    "{n} Einträge": "{n} entries",
     "{phase} ab {day}.{month}.": "{phase} from {day}.{month}.",
     "{produkt}: Vorrat leer": "{produkt}: supply empty",
     "{produkt}: Vorrat reicht noch ca. {n:.1f} Gießgänge (Rest {rest:.0f} ml)": "{produkt}: supply lasts for about {n:.1f} more waterings ({rest:.0f} ml left)",

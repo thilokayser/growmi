@@ -11,6 +11,11 @@ router = APIRouter()
 ICONS = {"Notiz": "note", "Topping": "scissors", "LST": "link", "Umtopfen": "package", "Schädling": "bug", "Sonstiges": "note"}
 
 
+
+def _when(e) -> str:
+    """'20.10. ' in front of an action, shown in the marker's tooltip."""
+    return f"{e['ts'][8:10]}.{e['ts'][5:7]}. "
+
 def _date(s: str | None) -> date | None:
     try:
         return date.fromisoformat(s) if s else None
@@ -36,9 +41,9 @@ def verlauf(request: Request, von: str | None = None, bis: str | None = None, co
         items = []
         for e in entries.list_entries(conn, p["id"]):
             if e["kind"] == "watering":
-                items.append((e["ts"], "droplet", e["text"]))
+                items.append((e["ts"], "droplet", _when(e) + e["text"]))
             elif e["kind"] == "intervention":
-                items.append((e["ts"], ICONS.get(e["text"].split(" ")[0], "note"), e["text"]))
+                items.append((e["ts"], ICONS.get(e["text"].split(" ")[0], "note"), _when(e) + e["text"]))
         waterings = sum(1 for e in items if e[1] == "droplet")
         summary = " · ".join(tr("{phase} ab {day}.{month}.", phase=tr(ph), day=ab[8:10], month=ab[5:7]) for ph, ab in phases)
         if waterings:

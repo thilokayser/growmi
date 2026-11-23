@@ -357,3 +357,30 @@ def test_photo_takes_the_exif_time_and_falls_back_to_the_form(web):
     stamps = [r[0] for r in c.execute("SELECT ts FROM photo ORDER BY id")]
     c.close()
     assert stamps == ["2026-10-20T09:15", "2026-10-30T12:00"]
+
+
+def test_auswertung_filters_finished_and_growing_plants(web):
+    from app import plants as pl
+    a = seed_plant(web, 1, "Alpha")
+    seed_plant(web, 2, "Beta")
+    c = web.conn()
+    pl.finish_plant(c, a, "2026-10-25T10:00")
+    c.close()
+    fertig = web.client.get("/auswertung?status=fertig").text
+    wachstum = web.client.get("/auswertung?status=wachstum").text
+    assert "Alpha" in fertig and "Beta" not in fertig
+    assert "Beta" in wachstum and "Alpha" not in wachstum
+
+
+def test_auswertung_postcards_and_photo_upload_for_harvested_plants(web):
+    a = seed_plant(web, 1, "Alpha")
+    c = web.conn()
+    from app import plants as pl
+    pl.finish_plant(c, a, "2026-10-25T10:00")
+    c.close()
+    t = web.client.get("/auswertung?status=fertig&ansicht=karten").text
+    assert 'class="card postcard"' in t and "Postkarten" in t
+    assert f'name="plant_id" value="{a}"' in t and 'value="/auswertung?status=fertig&amp;ansicht=karten"' in t
+    r = web.client.post("/foto", data={"plant_id": str(a), "ts": "2026-10-26T09:00", "back": "/auswertung?status=fertig"},
+                        files={"datei": ("a.jpg", _jpeg_with_time(None), "image/jpeg")})
+    assert r.status_code == 303 and r.headers["location"] == "/auswertung?status=fertig"

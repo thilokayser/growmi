@@ -1,11 +1,33 @@
 {% extends "base.html" %}
+{% from "icons.html" import icon %}
 {% block title %}Auswertung{% endblock %}
 {% macro bar(value, maximum) %}{% if value %}<div class="vbar" aria-hidden="true"><i style="width:{{ (value / maximum * 100)|round(1) }}%"></i></div>{% endif %}{% endmacro %}
+{% macro photo_upload(pid) %}
+<form method="post" action="{{ root }}/foto" enctype="multipart/form-data" class="photo-add">
+  <input type="hidden" name="plant_id" value="{{ pid }}"><input type="hidden" name="ts" value="{{ now }}"><input type="hidden" name="back" value="{{ back_url }}">
+  <label class="btn ghost">{{ icon('camera') }} {{ tr('Foto') }}<input class="visually-hidden" type="file" name="datei" accept="image/*" required onchange="this.form.submit()"></label>
+</form>
+{% endmacro %}
+{% macro postcard(t) %}{% set p = info[t.plant_id] %}
+<article class="card postcard">
+  {% if last_photo.get(t.plant_id) %}<a href="{{ root }}/pflanze/{{ t.plant_id }}"><img class="postcard-img" src="{{ root }}/fotos/t_{{ last_photo[t.plant_id] }}" width="320" height="320" loading="lazy" alt="{{ nick(p) }}"></a>
+  {% else %}<div class="postcard-img placeholder" aria-hidden="true">{{ icon('camera') }}</div>{% endif %}
+  <h2 class="postcard-title"><a href="{{ root }}/pflanze/{{ t.plant_id }}">{{ nick(p) }}</a></h2>
+  <p class="muted">{{ p.sorte }} · Platz {{ p.slot }}{% if p.ausgezogen_am %} · {{ tr('Fertig') }}{% else %} · {{ tr('Im Wachstum') }}{% endif %}</p>
+  <p class="num">{{ ('%g g' % t.trocken_g) if t.trocken_g else '–' }} {{ tr('trocken') }} · {{ ('%g L' % (t.water_l|round(1))) if t.water_l else '–' }} {{ tr('Wasser') }}</p>
+  {{ photo_upload(t.plant_id) }}
+</article>{% endmacro %}
 {% block content %}
 <h1>Auswertung</h1>
 <div class="actions"><a class="btn" href="{{ root }}/export.csv">CSV exportieren</a></div>
+<nav class="segmented" aria-label="{{ tr('Filter') }}">
+  {% for k, label in [("alle", tr("Alle")), ("fertig", tr("Fertig")), ("wachstum", tr("Im Wachstum"))] %}<a class="seg{{ ' active' if status == k }}" href="?status={{ k }}&amp;ansicht={{ view }}"{% if status == k %} aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}
+</nav>
+<nav class="segmented" aria-label="{{ tr('Ansicht') }}">
+  {% for k, label in [("tabelle", tr("Tabelle")), ("karten", tr("Postkarten"))] %}<a class="seg{{ ' active' if view == k }}" href="?status={{ status }}&amp;ansicht={{ k }}"{% if view == k %} aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}
+</nav>
 {% if not groups %}<p>Noch keine Pflanzen.</p>{% endif %}
-{% if ranking %}
+{% if ranking and view == 'tabelle' %}
 <section class="sorte-group ranking">
   <h2>Rangliste der Sorten</h2>
   <table class="num">
@@ -22,7 +44,7 @@
   </table>
 </section>
 {% endif %}
-{% for g in groups %}
+{% if view == 'karten' %}<div class="postcards">{% for t in cards %}{{ postcard(t) }}{% else %}<p>Noch keine Pflanzen.</p>{% endfor %}</div>{% else %}{% for g in groups %}
 <section class="sorte-group">
   <h2>{{ g.sorte }}</h2>
   {% if avgs[g.sorte] %}<p class="muted num">⌀ {% for label, v in avgs[g.sorte] %}{{ label }} {{ ('%g' % (v|round(1))) if v is not none else '–' }}{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}
@@ -32,7 +54,7 @@
     {% for t in g.plants %}
     {% set p = info[t.plant_id] %}
     <tr class="plant">
-      <td data-label="Foto">{% if last_photo.get(t.plant_id) %}<a href="{{ root }}/pflanze/{{ t.plant_id }}"><img class="thumb" src="{{ root }}/fotos/t_{{ last_photo[t.plant_id] }}" width="72" height="72" loading="lazy" alt="Letztes Foto {{ p.sorte }}"></a>{% else %}–{% endif %}</td>
+      <td data-label="Foto">{% if last_photo.get(t.plant_id) %}<a href="{{ root }}/pflanze/{{ t.plant_id }}"><img class="thumb" src="{{ root }}/fotos/t_{{ last_photo[t.plant_id] }}" width="72" height="72" loading="lazy" alt="Letztes Foto {{ p.sorte }}"></a>{% else %}–{% endif %}{{ photo_upload(t.plant_id) }}</td>
       <td data-label="Pflanze"><a href="{{ root }}/pflanze/{{ t.plant_id }}">{{ nick(p) }} · Platz {{ p.slot }}</a>{% if p.typ %}<br><small>{{ p.typ|typ }}</small>{% endif %}</td>
       <td data-label="Ertrag trocken">{{ ('%g g' % t.trocken_g) if t.trocken_g else '–' }}{{ bar(t.trocken_g, maxima.trocken_g) }}</td>
       <td data-label="Wasser">{{ ('%g L' % (t.water_l|round(1))) if t.water_l else '–' }}{{ bar(t.water_l, maxima.water_l) }}</td>
@@ -49,7 +71,7 @@
     </tbody>
   </table>
 </section>
-{% endfor %}
+{% endfor %}{% endif %}
 {% if klima %}
 <section class="sorte-group">
   <h2>Klima pro Phase</h2>

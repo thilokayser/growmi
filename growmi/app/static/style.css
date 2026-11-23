@@ -399,3 +399,14 @@ output { font-size: .9rem; }
   main { margin-left: 15rem; max-width: 52rem; padding-top: 2rem; }
   .kiosk main { margin-left: 0; }
 }
+
+/* Auswertung: filter links, postcards, photo upload */
+a.seg { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.postcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; margin-top: 1rem; }
+.postcard { display: flex; flex-direction: column; gap: .3rem; margin: 0; }
+.postcard-img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 1rem; background: var(--bg-alt); }
+.postcard-img.placeholder { display: grid; place-items: center; color: var(--muted); }
+.postcard-title { margin: .5rem 0 0; font-size: 1.15rem; }
+.postcard-title a { color: var(--text); text-decoration: none; }
+.photo-add { margin: .4rem 0 0; }
+.photo-add .btn { flex-direction: row; align-self: flex-start; min-height: 2.5rem; }

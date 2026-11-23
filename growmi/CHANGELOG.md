@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.8
+- Analysis: add photos to any plant, also harvested ones.
+- Analysis: filter Alle / Fertig / Im Wachstum, and a Postkarten view (photo, name, dry yield, water) next to the table.
+
 ## 0.28.7
 - Photo upload: the time the photo was taken (EXIF) is used as the entry time. Without EXIF time the form time (now) is used.
 

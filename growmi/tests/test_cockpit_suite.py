@@ -257,3 +257,20 @@ def test_cockpit_exhaust_mode_button_and_event(web, conn):
     ha.states["input_select.grow_abluft_modus"] = "Standard"
     events.detect_events(conn, ha, NOW)
     assert any("Abluft-Modus: Standard" in r["text"] for r in events.list_events(conn, 5))
+
+
+def test_band_box_scales_the_target_onto_the_chart():
+    from app import climate
+    # scale 0.5..1.5 over 80 px: the band 1.0..1.2 ends at y=24 and is 16 px tall
+    assert climate.band_box((1.0, 1.2), 0.5, 1.5) == (pytest.approx(24), pytest.approx(16))
+    assert climate.polyline([0.5, 1.5], 300, 80, 0.5, 1.5) == "0,80 300,0"
+
+
+def test_vpd_chart_shows_the_target_band_of_the_box_phase(web):
+    web.ha.states["input_select.grow_phase"] = "Blüte"
+    web.ha.histories["sensor.growbox_vpd"] = [0.9, 1.3, 1.5]
+    t = web.client.get("/cockpit").text
+    assert 'class="chart-band"' in t and "Ziel 1.2–1.6 kPa" in t
+    web.ha.states["input_select.grow_phase"] = "Keimling"
+    web.ha.histories["sensor.growbox_vpd"] = [0.9, 1.3, 1.5]
+    assert 'class="chart-band"' in web.client.get("/cockpit").text  # Keimling band 0.4..0.8 is still drawn

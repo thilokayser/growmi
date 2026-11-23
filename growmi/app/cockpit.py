@@ -1,20 +1,27 @@
 from datetime import datetime, time, timedelta
 
-from . import climate, config, events, jobs, phase_link, settings, tasks
+from . import climate, config, events, heatmap, jobs, phase_link, settings, tasks
 from .i18n import tr
 
 MODES = ("Auto", "Dauer an", "Dauer aus")
 EXHAUST_MODES = ("Feuchteschutz", "Standard")
 
 
-def _chart(ha, entity: str | None, title: str, unit: str, now: datetime) -> dict | None:
+def _chart(ha, entity: str | None, title: str, unit: str, now: datetime, band: tuple[float, float] | None = None) -> dict | None:
     if not entity:
         return None
     vals = ha.history(entity, now - timedelta(hours=24), now)
     if len(vals) < 2:
         return None
-    return {"title": title, "unit": unit, "points": climate.polyline(vals, 300, 80), "min": min(vals), "max": max(vals),
-            "first": tr("letzte 24 h"), "last": ""}
+    lo, hi = min(vals), max(vals)
+    if band:  # the scale must show the whole target band, even when the values stay away from it
+        lo, hi = min(lo, band[0]), max(hi, band[1])
+    out = {"title": title, "unit": unit, "points": climate.polyline(vals, 300, 80, lo, hi), "min": min(vals), "max": max(vals),
+           "first": tr("letzte 24 h"), "last": ""}
+    if band:
+        out["band"] = climate.band_box(band, lo, hi)
+        out["target"] = f"{tr('Ziel')} {band[0]:g}–{band[1]:g} {unit}"
+    return out
 
 
 def build(ha, conn, options: dict, now: datetime) -> dict:
@@ -41,9 +48,10 @@ def build(ha, conn, options: dict, now: datetime) -> dict:
         vals = ha.history(energy, datetime.combine(now.date(), time.min), now)
         kwh = jobs.consumption(vals)
     price = settings.strompreis(ha, options)
+    box = config.state(ha, "phase") or jobs.last_box_phase(conn)
     charts = {"temp": _chart(ha, config.entity("temp"), tr("Temperatur 24 h"), "°C", now),
               "rh": _chart(ha, config.entity("rh"), tr("Luftfeuchte 24 h"), "%", now),
-              "vpd": _chart(ha, config.entity("vpd"), tr("VPD 24 h"), "kPa", now)}
+              "vpd": _chart(ha, config.entity("vpd"), tr("VPD 24 h"), "kPa", now, heatmap.band(box))}
     return {
         "devices": [{"name": d["name"], "on": None if not d.get("entity") or (s := ha.state(d["entity"])) is None else s == "on"}
                     for d in config.devices()],

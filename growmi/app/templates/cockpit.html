@@ -71,8 +71,8 @@
   <h2 id="verlauf24">Letzte 24 Stunden</h2>
   {% for ch in charts %}
   <figure class="chart">
-    <figcaption>{{ ch.title }}: {{ '%g' % ch.min }} bis {{ '%g' % ch.max }} {{ ch.unit }}</figcaption>
-    <svg viewBox="0 -4 300 88" preserveAspectRatio="none" role="img" aria-label="{{ ch.title }}, {{ '%g' % ch.min }} bis {{ '%g' % ch.max }} {{ ch.unit }}"><polyline points="{{ ch.points }}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>
+    <figcaption>{{ ch.title }}: {{ '%g' % ch.min }} bis {{ '%g' % ch.max }} {{ ch.unit }}{% if ch.target %} · {{ ch.target }}{% endif %}</figcaption>
+    <svg viewBox="0 -4 300 88" preserveAspectRatio="none" role="img" aria-label="{{ ch.title }}, {{ '%g' % ch.min }} bis {{ '%g' % ch.max }} {{ ch.unit }}{% if ch.target %}, {{ ch.target }}{% endif %}">{% if ch.band %}<rect class="chart-band" x="0" y="{{ '%.2f' % ch.band[0] }}" width="300" height="{{ '%.2f' % ch.band[1] }}"/>{% endif %}<polyline points="{{ ch.points }}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>
   </figure>
   {% endfor %}
   {% if kwh %}<p class="num">Strom heute: <b>{{ kwh }} kWh</b>{% if eur %} · ca. {{ eur }} €{% endif %}</p>{% endif %}

@@ -3,12 +3,13 @@ from .plants import BOX_PHASES
 SERIES = {"t_avg", "rh_avg", "vpd_avg", "kwh"}
 
 
-def polyline(values: list[float], w: float = 300, h: float = 80) -> str:
-    """SVG points for a line chart of w x h; fewer than two values give no line."""
+def polyline(values: list[float], w: float = 300, h: float = 80, lo: float | None = None, hi: float | None = None) -> str:
+    """SVG points for a line chart of w x h; fewer than two values give no line. lo/hi fix the scale (for a band)."""
     n = len(values)
     if n < 2:
         return ""
-    lo, hi = min(values), max(values)
+    lo = min(values) if lo is None else lo
+    hi = max(values) if hi is None else hi
     pts = []
     for i, v in enumerate(values):
         y = h - (v - lo) / (hi - lo) * h if hi > lo else h / 2
@@ -31,3 +32,8 @@ def phase_stats(conn) -> list[dict]:
         " WHERE box_phase IS NOT NULL GROUP BY box_phase")
     out = [dict(r) for r in rows]
     return sorted(out, key=lambda r: BOX_PHASES.index(r["phase"]) if r["phase"] in BOX_PHASES else 9)
+
+
+def band_box(band: tuple[float, float], lo: float, hi: float, h: float = 80) -> tuple[float, float]:
+    """Top and height of a target band on the same scale as polyline(values, lo=lo, hi=hi)."""
+    return h - (band[1] - lo) / (hi - lo) * h, (band[1] - band[0]) / (hi - lo) * h

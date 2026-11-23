@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.28.3
+- The 24 h VPD chart on the overview shows the target band of the current box phase as a shaded strip, so you see at a glance whether the values stay in the band.
+
 ## 0.28.2
 - Fix: the phase colors of the timeline were gone (a class name clash with the new climate gauges).
 

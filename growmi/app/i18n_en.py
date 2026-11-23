@@ -168,6 +168,7 @@ EN: dict[str, str] = {
     "pH und EC": "pH and EC",
     "{0} · Gießen": "{0} · Watering",
     "Gießen": "Watering",
+    "Ziel": "Target",
     "Woche {0} ·": "Week {0} ·",
     "{0} Pflanzen": "{0} plants",
     "Gießen eintragen": "Log watering",

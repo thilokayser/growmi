@@ -240,7 +240,7 @@ def foto_post(request: Request, plant_id: int | None = Form(None), ts: str = For
         plants.require_plants(conn, [plant_id])
         if datei is None:
             raise ValueError(tr("Bitte ein Bild auswählen"))
-        when = plants.norm_ts(ts)
+        when = images.exif_time(datei.file) or plants.norm_ts(ts)  # the photo's own time wins, the form time is the fallback
         name = images.save_image(request.app.state.data_dir, datei.file)
     except ValueError as e:
         return render(request, "foto.html", 400, plants=occupied_now(conn), ts=ts, error=str(e))

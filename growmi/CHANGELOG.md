@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.28.7
+- Photo upload: the time the photo was taken (EXIF) is used as the entry time. Without EXIF time the form time (now) is used.
+
 ## 0.28.6
 - Desktop: the navigation is a sidebar on the left (from 60 rem width). On the settings page the sidebar also lists the sections as links.
 - Verlauf: the section "Ereignisse im Zelt" can be collapsed.

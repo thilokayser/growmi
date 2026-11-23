@@ -331,3 +331,29 @@ def test_verlauf_events_section_is_collapsible(web):
     assert "Lüfter an" in t
     assert 'class="subnav"' not in t  # the settings links only appear on the settings page
     assert 'class="subnav"' in web.client.get("/einstellungen").text
+
+
+def _jpeg_with_time(stamp: str | None) -> bytes:
+    import io
+    from PIL import Image
+    img = Image.new("RGB", (40, 30), "green")
+    buf = io.BytesIO()
+    kwargs = {}
+    if stamp:
+        exif = Image.Exif()
+        exif[306] = stamp  # DateTime
+        kwargs["exif"] = exif.tobytes()
+    img.save(buf, "JPEG", **kwargs)
+    return buf.getvalue()
+
+
+def test_photo_takes_the_exif_time_and_falls_back_to_the_form(web):
+    pid = seed_plant(web, 1)
+    web.client.post("/foto", data={"plant_id": str(pid), "ts": "2026-10-30T12:00"},
+                    files={"datei": ("a.jpg", _jpeg_with_time("2026:10:20 09:15:00"), "image/jpeg")})
+    web.client.post("/foto", data={"plant_id": str(pid), "ts": "2026-10-30T12:00"},
+                    files={"datei": ("b.jpg", _jpeg_with_time(None), "image/jpeg")})
+    c = web.conn()
+    stamps = [r[0] for r in c.execute("SELECT ts FROM photo ORDER BY id")]
+    c.close()
+    assert stamps == ["2026-10-20T09:15", "2026-10-30T12:00"]

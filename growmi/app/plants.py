@@ -6,10 +6,11 @@ from . import config
 from .i18n import tr
 
 # examples for the nickname field: rapper and stoner-meme names, only suggestions
-NICKNAME_EXAMPLES = ("Snoop", "Method Man", "Redman", "B-Real", "Biggie", "Tupac", "Nas", "Ice Cube", "Eminem", "Dr. Dre",
-                     "Kendrick", "Jay-Z", "Ghostface", "Chronic Carl", "Dank Dave", "Mr. Bong", "Kush Kevin",
-                     "Sir Smokes-a-Lot", "Munchie Mike", "Blunt Bob", "Herb Hans", "Skunk Steve", "Bud Lightyear",
-                     "Dabbin' Dan")
+NICKNAME_EXAMPLES = ("Notorious B.U.D.", "Lil Sprout", "Yung Stem", "Trichome Teddy", "Big Pistil", "Chronic Lamar",
+                     "Hemp Hop Hero", "Dr. Dank", "Wu-Tang Terpene", "Fresh Prince of Bud-Air", "Cypress Hill Billy",
+                     "Terp Tupac", "Snoop Dogg Walker", "Mr. Munchies", "Sir Smokes-a-Lot", "Couch Lock Carl",
+                     "Dank Vader", "Bong Bunny", "Kush Kardashian", "Green Gatsby", "Dabbin' Dan", "Herb Hendrix",
+                     "Pistil Pete", "Ganja Gandalf")
 PHASES = ("Keimling", "Wachstum", "Blüte", "Trocknung", "Geerntet")
 BOX_PHASES = ("Keimling", "Wachstum", "Blüte")
 EDITABLE = {"sorte", "hersteller", "keimdatum", "topf", "notiz", "eingesetzt_am",

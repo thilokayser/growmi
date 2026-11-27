@@ -292,6 +292,7 @@ table + form, table + details, table + .actions { margin-top: 1rem; }
 .jar-sheet { display: flex; flex-wrap: wrap; gap: 2mm; margin-top: 1.2rem; }
 .jar-label { box-sizing: border-box; display: flex; align-items: center; background: white; color: var(--paper-ink);
   border-radius: 1.2mm; box-shadow: 0 0 0 1px var(--hairline); overflow: hidden; break-inside: avoid; }
+.jar-label[hidden] { display: none; }
 .jar-a4 .jar-label { width: 60mm; height: 30mm; padding: 3mm; gap: 3mm; }
 .jar-rolle .jar-label { width: 62mm; height: 29mm; padding: 2.5mm; gap: 3mm; }
 .jar-text { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 1mm; }

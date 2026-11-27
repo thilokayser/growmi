@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.29.1
+- Jar labels: ticking a plant or switching the format updates the preview at once. Printing shows only the labels, not the form.
+- After an update the browser loads the new stylesheet instead of its cached copy.
+
 ## 0.29.0
 - Jar labels (Master data → Glas-Etiketten, or the button on a harvested plant): strain, breeder and a small QR code per label. A4 sheet (60 × 30 mm) or label printer (62 × 29 mm). The strain name shrinks until it fits, it is never cut.
 - The QR code opens a read-only profile of the plant (harvest date, dry yield, rating, latest photo) on the LAN port, without login.

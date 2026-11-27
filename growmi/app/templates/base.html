@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <title>{% block title %}{% endblock %} · Growmi</title>
   {% include "_theme_head.html" %}
-  <link rel="stylesheet" href="{{ root }}/static/style.css">
+  <link rel="stylesheet" href="{{ root }}/static/style.css?v={{ css_v }}">
 </head>
 <body>
   {% from "icons.html" import icon %}

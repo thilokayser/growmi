@@ -1,3 +1,4 @@
+import hashlib
 import os
 from pathlib import Path
 
@@ -32,6 +33,8 @@ def fmt_npk(f) -> str:
 templates.env.filters["dt"] = fmt_dt
 templates.env.filters["typ"] = lambda v: i18n.tr(plants.TYPEN.get(v, ""))
 templates.env.filters["npk"] = fmt_npk
+# part of the stylesheet URL, so a browser fetches the new file after an update instead of its cached copy
+templates.env.globals["css_v"] = hashlib.sha1((HERE / "static" / "style.css").read_bytes()).hexdigest()[:10]
 templates.env.globals["slots"] = config.slots
 templates.env.globals["slot_names"] = config.slot_names
 templates.env.globals["slot_label"] = config.slot_label

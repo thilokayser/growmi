@@ -83,8 +83,9 @@ def jar_labels(request: Request, conn=Depends(get_conn)):
     fmt = request.query_params.get("format")
     fmt = fmt if fmt in LABEL_FORMATS else "a4"
     opts, ha, secret = request.app.state.options, request.app.state.ha, request.app.state.public_secret
-    labels = [{"p": p, "svg": qr.label_svg(qr.plant_url(opts, ha, secret, p["id"]))} for p in chosen]
-    return render(request, "etiketten.html", plants=done, chosen={p["id"] for p in chosen}, labels=labels, fmt=fmt)
+    # every harvested plant gets its label, the checkboxes only show or hide it, so the preview follows them at once
+    labels = [{"p": p, "svg": qr.label_svg(qr.plant_url(opts, ha, secret, p["id"]))} for p in done]
+    return render(request, "etiketten.html", chosen={p["id"] for p in chosen}, labels=labels, fmt=fmt)
 
 
 @router.get("/kiosk")

@@ -608,7 +608,6 @@ EN: dict[str, str] = {
     "Format": "Format",
     "A4-Bogen, 60 × 30 mm": "A4 sheet, 60 × 30 mm",
     "Etikettendrucker, 62 × 29 mm": "Label printer, 62 × 29 mm",
-    "Vorschau aktualisieren": "Update preview",
     "Noch keine geerntete Pflanze.": "No harvested plant yet.",
     "QR-Code für {0}": "QR code for {0}",
     "Alle Details": "All details",

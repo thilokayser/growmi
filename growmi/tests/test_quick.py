@@ -113,18 +113,29 @@ def test_jar_labels_list_only_harvested_plants(web):
     t = web.client.get("/etiketten").text
     assert "Gorilla Glue #4" in t and "Noch im Zelt" not in t
     assert t.count('class="jar-label"') == 1 and "Sensi" in t and 'class="jar-sheet jar-a4"' in t
-    assert f'value="{a}" checked' in t
+    assert f'data-jar="{a}" checked' in t and " hidden>" not in t
 
 
 def test_jar_labels_selection_and_format(web):
     a = harvested(web, 1, "Alpha")
     b = harvested(web, 2, "Beta")
-    t = web.client.get(f"/etiketten?id=&id={b}&format=rolle").text
-    assert t.count('class="jar-label"') == 1 and 'class="jar-sheet jar-rolle"' in t and "size: 62mm 29mm" in t
-    assert f'value="{b}" checked' in t and f'value="{a}" checked' not in t
-    none = web.client.get("/etiketten?id=").text
-    assert 'class="jar-label"' not in none and "Drucken" not in none
+    t = web.client.get(f"/etiketten?id={b}&format=rolle").text
+    assert 'class="jar-sheet jar-rolle"' in t and 'value="rolle" checked' in t
+    assert f'data-jar="{b}" checked' in t and f'data-jar="{a}" checked' not in t
+    assert f'class="jar-label" data-jar="{b}">' in t and f'class="jar-label" data-jar="{a}" hidden>' in t
+    assert t.count(' hidden>') == 1
     assert 'class="jar-sheet jar-a4"' in web.client.get("/etiketten?format=quatsch").text
+
+
+def test_jar_labels_without_harvest(web):
+    seed_plant(web, 1, "Alpha")
+    t = web.client.get("/etiketten").text
+    assert "Noch keine geerntete Pflanze." in t and 'class="jar-label"' not in t and "Drucken" not in t
+
+
+def test_stylesheet_url_changes_with_its_content(web):
+    from app.web import templates
+    assert f'/static/style.css?v={templates.env.globals["css_v"]}"' in web.client.get("/").text
 
 
 def test_harvested_plant_page_links_its_jar_label(web):

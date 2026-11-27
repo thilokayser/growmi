@@ -17,7 +17,7 @@ def test_healthz(tmp_path):
 def test_ingress_prefix_in_links(tmp_path):
     r = client(tmp_path).get("/", headers={"X-Ingress-Path": "/api/hassio_ingress/abc"})
     assert r.status_code == 200
-    assert 'href="/api/hassio_ingress/abc/static/style.css"' in r.text
+    assert 'href="/api/hassio_ingress/abc/static/style.css?v=' in r.text
 
 
 def test_static_served_through_ingress(tmp_path):

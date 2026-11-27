@@ -36,9 +36,10 @@ def new_form(request: Request, slot: int = 0, conn=Depends(get_conn)):
 @router.post("/pflanze/neu")
 def new_post(request: Request, sorte: str = Form(""), hersteller: str = Form(""), keimdatum: str = Form(""),
              slot: int = Form(...), phase: str = Form("Keimling"), topf: str = Form(""), notiz: str = Form(""),
-             eingesetzt_am: str = Form(""), vorlage: str = Form(""), typ: str = Form(""), conn=Depends(get_conn)):
+             eingesetzt_am: str = Form(""), vorlage: str = Form(""), typ: str = Form(""), kreis: str = Form(""),
+             kreis_farbe: str = Form(""), conn=Depends(get_conn)):
     form = dict(sorte=sorte, hersteller=hersteller, keimdatum=keimdatum, slot=slot, phase=phase, topf=topf,
-                notiz=notiz, eingesetzt_am=eingesetzt_am, typ=typ)
+                notiz=notiz, eingesetzt_am=eingesetzt_am, typ=typ, kreis=kreis, kreis_farbe=kreis_farbe)
     try:
         template = strains.get_strain(conn, int(vorlage)) if vorlage.strip().isdigit() else None
         if not sorte.strip() and template:  # nothing typed: take the saved template
@@ -48,7 +49,8 @@ def new_post(request: Request, sorte: str = Form(""), hersteller: str = Form("")
             raise ValueError(tr("Bitte eine Sorte angeben"))
         plants.add_plant(conn, sorte=sorte.strip(), hersteller=hersteller.strip(),
                          keimdatum=plants.norm_date(keimdatum), slot=slot, phase=phase, topf=topf,
-                         notiz=notiz, eingesetzt_am=plants.norm_ts(eingesetzt_am), typ=typ)
+                         notiz=notiz, eingesetzt_am=plants.norm_ts(eingesetzt_am), typ=typ,
+                         kreis=plants.norm_kreis(kreis, kreis_farbe))
         strains.ensure_strain(conn, sorte, hersteller, typ)
     except (ValueError, plants.SlotTaken) as e:
         return render(request, "plant_new.html", 400, **_new_ctx(conn, form, str(e)))
@@ -186,7 +188,8 @@ def delete(request: Request, plant_id: int, conn=Depends(get_conn)):
 @router.post("/pflanze/{plant_id}/bearbeiten")
 def edit(request: Request, plant_id: int, sorte: str = Form(...), hersteller: str = Form(""),
          keimdatum: str = Form(""), topf: str = Form(""), notiz: str = Form(""), slot: str = Form(""),
-         eingesetzt_am: str = Form(""), typ: str = Form(""), spitzname: str = Form(""), conn=Depends(get_conn)):
+         eingesetzt_am: str = Form(""), typ: str = Form(""), spitzname: str = Form(""), kreis: str = Form(""),
+         kreis_farbe: str = Form(""), conn=Depends(get_conn)):
     _plant_or_404(conn, plant_id)
     try:
         if not sorte.strip():
@@ -194,7 +197,8 @@ def edit(request: Request, plant_id: int, sorte: str = Form(...), hersteller: st
         if slot.strip():
             plants.move_plant(conn, plant_id, int(slot))
         fields = dict(sorte=sorte.strip(), hersteller=hersteller.strip(),
-                      keimdatum=plants.norm_date(keimdatum), topf=topf, notiz=notiz, typ=plants.norm_typ(typ))
+                      keimdatum=plants.norm_date(keimdatum), topf=topf, notiz=notiz, typ=plants.norm_typ(typ),
+                      kreis=plants.norm_kreis(kreis, kreis_farbe))
         if config.current["nicknames"]:  # the field is only on the form when the option is on
             fields["spitzname"] = spitzname.strip() or None
         if eingesetzt_am.strip():

@@ -30,7 +30,7 @@
     <div class="slot full{{ ' thirsty' if c.thirsty }}" data-slot="{{ c.slot }}" data-pos="{{ c.pos }}" style="grid-row:{{ c.row }};grid-column:{{ c.col }}">
       <a class="slot-link" href="{{ root }}/pflanze/{{ c.plant.id }}">
       <small class="slot-pos">{{ slot_label(c.slot) }}</small>
-      <span class="canopy-box" aria-hidden="true"><span class="canopy ph-{{ c.phase }}" style="--size:{{ '%g' % c.canopy }}%"></span></span>
+      <span class="canopy-box" aria-hidden="true">{% if c.photo %}<span class="canopy photo ph-{{ c.phase }}" style="--size:{{ '%g' % c.canopy }}%"><img src="{{ root }}/fotos/t_{{ c.photo }}" alt="" loading="lazy"></span>{% else %}<span class="canopy ph-{{ c.phase }}" style="--size:{{ '%g' % c.canopy }}%{% if c.plant.kreis and c.plant.kreis.startswith('#') %};--ph:{{ c.plant.kreis }}{% endif %}"></span>{% endif %}</span>
       <span class="sorte">{{ nick(c.plant) }}</span>{% if nick(c.plant) != c.plant.sorte %}<small>{{ c.plant.sorte }}</small>{% endif %}
       <span class="chip ph-{{ c.phase }}">{{ tr(c.phase) }}</span>{% if c.plant.typ %}<small>{{ c.plant.typ|typ }}</small>{% endif %}
       <small class="num">Tag {{ c.phase_day }} in dieser Phase</small>

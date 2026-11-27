@@ -55,7 +55,10 @@ def slot_cards(conn, now: datetime, reminder_days: int) -> list[dict]:
         age = _days(p["keimdatum"] or p["eingesetzt_am"], now)
         since = calc.days_since_water(conn, pid, now.date())
         liters = last_liters(conn, pid)
+        photo = conn.execute("SELECT filename FROM photo WHERE plant_id=? ORDER BY ts DESC, id DESC LIMIT 1",
+                             (pid,)).fetchone() if p["kreis"] == "foto" else None
         cards.append({**place, "plant": p, "canopy": canopy_pct(age), "phase": plants.current_phase(conn, pid),
+                      "photo": photo["filename"] if photo else None,
                       "phase_day": _days(ab, now) + 1, "age_days": age, "week": age // 7 + 1,
                       "water_l": calc.plant_totals(conn, pid).water_l,
                        "water_ago": _ago(since),

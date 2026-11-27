@@ -1,0 +1,17 @@
+{# the circle on the tent map; expects `kreis` = stored value (None, "foto" or "#rrggbb") #}
+{% set own = kreis and kreis != 'foto' and kreis not in kreis_farben %}
+<fieldset class="kreis-field">
+  <legend>Kreis im Zelt</legend>
+  <label class="check"><input type="radio" name="kreis" value=""{% if not kreis %} checked{% endif %}> Farbe der Phase</label>
+  <label class="check"><input type="radio" name="kreis" value="foto"{% if kreis == 'foto' %} checked{% endif %}> Letztes Foto</label>
+  <div class="swatches" role="group" aria-label="Farbe">
+    {% for f in kreis_farben %}<label class="swatch" style="--sw: {{ f }}"><input type="radio" name="kreis" value="{{ f }}"{% if kreis == f %} checked{% endif %} aria-label="Farbe {{ f }}"></label>{% endfor %}
+    <label class="swatch own" title="Eigene Farbe"><input type="radio" name="kreis" value="eigene"{% if own %} checked{% endif %} aria-label="Eigene Farbe"><input type="color" name="kreis_farbe" value="{{ kreis if own else '#7fd6d0' }}" aria-label="Eigene Farbe wählen"></label>
+  </div>
+</fieldset>
+<script>
+  // picking a colour in the picker also selects "own colour"
+  document.querySelectorAll(".kreis-field input[type=color]").forEach(function (c) {
+    ["click", "input"].forEach(function (ev) { c.addEventListener(ev, function () { c.previousElementSibling.checked = true; }); });
+  });
+</script>

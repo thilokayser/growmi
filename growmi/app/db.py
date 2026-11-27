@@ -69,7 +69,8 @@ ADDED_COLUMNS = [("fertilizer", "n", "REAL"), ("fertilizer", "p", "REAL"), ("fer
                  ("plant", "ernte_notiz", "TEXT"), ("climate_day", "vpd_ok_pct", "REAL"),
                  ("climate_day", "kwh", "REAL"), ("plant", "typ", "TEXT"), ("strain", "typ", "TEXT"),
                  ("fertilizer", "bestand_ml", "REAL"), ("fertilizer", "bestand_ab", "TEXT"),
-                 ("intervention", "tag", "TEXT"), ("watering_plant", "liters", "REAL"), ("plant", "spitzname", "TEXT")]
+                 ("intervention", "tag", "TEXT"), ("watering_plant", "liters", "REAL"), ("plant", "spitzname", "TEXT"),
+                 ("plant", "kreis", "TEXT")]
 
 
 def connect(path: str) -> sqlite3.Connection:

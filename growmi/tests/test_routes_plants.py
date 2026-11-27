@@ -224,3 +224,45 @@ def test_watering_edit_plants(web):
 def test_recipe_save_with_deleted_fertilizer_shows_error(web):
     r = web.client.post("/stammdaten/rezept/Blüte", data={"ml_99": "2"})
     assert r.status_code == 400
+
+
+def kreis_of(web, pid):
+    c = web.conn()
+    v = c.execute("SELECT kreis FROM plant WHERE id=?", (pid,)).fetchone()[0]
+    c.close()
+    return v
+
+
+def test_new_plant_with_circle_colour(web):
+    assert 'name="kreis" value="" checked' in web.client.get("/pflanze/neu").text
+    assert web.client.post("/pflanze/neu", data={**NEW, "kreis": "#F2A37C"}).status_code == 303
+    pid = plants.slot_occupant(web.conn(), 3)
+    assert kreis_of(web, pid) == "#f2a37c"
+    assert "--ph:#f2a37c" in web.client.get("/").text
+
+
+def test_own_colour_and_bad_values(web):
+    assert web.client.post("/pflanze/neu", data={**NEW, "kreis": "eigene", "kreis_farbe": "#123456"}).status_code == 303
+    pid = plants.slot_occupant(web.conn(), 3)
+    assert kreis_of(web, pid) == "#123456"
+    page = web.client.get(f"/pflanze/{pid}").text
+    assert 'value="eigene" checked' in page and 'value="#123456"' in page
+    r = web.client.post(f"/pflanze/{pid}/bearbeiten", data={"sorte": "Blue Dream", "kreis": "url(x)"})
+    assert r.status_code == 400 and kreis_of(web, pid) == "#123456"
+
+
+def test_circle_shows_latest_photo_or_falls_back(web):
+    pid = seed_plant(web, 1, "Alpha")
+    assert web.client.post(f"/pflanze/{pid}/bearbeiten", data={"sorte": "Alpha", "kreis": "foto"}).status_code == 303
+    assert kreis_of(web, pid) == "foto"
+    home = web.client.get("/").text
+    assert 'class="canopy photo' not in home and "canopy ph-" in home  # no photo yet: phase colour
+    c = web.conn()
+    c.execute("INSERT INTO photo(ts, plant_id, filename) VALUES ('2026-10-01T10:00', ?, 'alt.jpg')", (pid,))
+    c.execute("INSERT INTO photo(ts, plant_id, filename) VALUES ('2026-10-05T10:00', ?, 'neu.jpg')", (pid,))
+    c.commit()
+    c.close()
+    home = web.client.get("/").text
+    assert 'class="canopy photo' in home and "/fotos/t_neu.jpg" in home and "t_alt.jpg" not in home
+    assert web.client.post(f"/pflanze/{pid}/bearbeiten", data={"sorte": "Alpha", "kreis": ""}).status_code == 303
+    assert kreis_of(web, pid) is None and "t_neu.jpg" not in web.client.get("/").text

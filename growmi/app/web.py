@@ -40,6 +40,7 @@ templates.env.globals["slot_names"] = config.slot_names
 templates.env.globals["slot_label"] = config.slot_label
 templates.env.globals["nicknames_on"] = lambda: config.current["nicknames"]
 templates.env.globals["nickname_examples"] = plants.NICKNAME_EXAMPLES
+templates.env.globals["kreis_farben"] = plants.KREIS_FARBEN
 templates.env.globals["nick"] = lambda p: (p["spitzname"] if config.current["nicknames"] and p["spitzname"] else None) or p["sorte"]
 templates.env.globals.update(_=i18n.static, tr=i18n.tr, lang=lambda: i18n.lang)
 templates.env.add_extension(i18n.AutoTranslate)

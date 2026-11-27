@@ -93,6 +93,7 @@
   <label>Hersteller <input name="hersteller" value="{{ p.hersteller }}"></label>
   <label>Keimdatum <input type="date" name="keimdatum" value="{{ p.keimdatum or '' }}"></label>
   <label>Typ <select name="typ"><option value="">–</option><option value="photo" {{ 'selected' if p.typ == 'photo' }}>Photoperiodisch</option><option value="auto" {{ 'selected' if p.typ == 'auto' }}>Autoflower</option></select></label>
+  {% with kreis = p.kreis %}{% include "_kreis_field.html" %}{% endwith %}
   <label>Topf <input name="topf" value="{{ p.topf }}"></label>
   <label>Notiz <textarea name="notiz" rows="3">{{ p.notiz }}</textarea></label>
   <label>Platz <select name="slot">{% for s in slots() %}<option value="{{ s }}" {{ 'selected' if s == p.slot }}>Platz {{ s }}</option>{% endfor %}</select></label>

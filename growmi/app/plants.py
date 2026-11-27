@@ -1,4 +1,5 @@
 import math
+import re
 import sqlite3
 from datetime import datetime
 
@@ -15,10 +16,25 @@ PHASES = ("Keimling", "Wachstum", "Blüte", "Trocknung", "Geerntet")
 BOX_PHASES = ("Keimling", "Wachstum", "Blüte")
 EDITABLE = {"sorte", "hersteller", "keimdatum", "topf", "notiz", "eingesetzt_am",
             "ausgezogen_am", "trocken_g", "nass_g", "bew_geschmack", "bew_wirkung", "bew_aufwand",
-            "trocknung_tage", "ernte_notiz", "typ", "spitzname"}
+            "trocknung_tage", "ernte_notiz", "typ", "spitzname", "kreis"}
 
 
 TYPEN = {"auto": "Autoflower", "photo": "Photoperiodisch"}
+# the circle on the tent map: empty = colour of the phase, "foto" = latest photo, else one colour (#rrggbb)
+KREIS_FARBEN = ("#a9e8c0", "#f5d98b", "#f2a37c", "#f4a3b3", "#c3b1f7", "#a9c4f7", "#7fd6d0", "#d9dee8")
+HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+def norm_kreis(kreis: str | None, farbe: str | None = None) -> str | None:
+    """Form value -> stored value; 'eigene' takes the colour picker."""
+    kreis = (kreis or "").strip()
+    if kreis == "eigene":
+        kreis = (farbe or "").strip()
+    if not kreis:
+        return None
+    if kreis == "foto" or HEX.match(kreis):
+        return kreis.lower()
+    raise ValueError(tr("Kreis: bitte Phasenfarbe, Foto oder eine Farbe wählen"))
 
 
 def norm_typ(typ: str | None) -> str | None:
@@ -89,16 +105,18 @@ def slot_occupant(conn: sqlite3.Connection, slot: int) -> int | None:
 
 
 def add_plant(conn, *, sorte: str, hersteller: str, keimdatum: str, slot: int, phase: str,
-              topf: str = "", notiz: str = "", eingesetzt_am: str | None = None, typ: str | None = None) -> int:
+              topf: str = "", notiz: str = "", eingesetzt_am: str | None = None, typ: str | None = None,
+              kreis: str | None = None) -> int:
     _check_slot(slot)
     _check_phase(phase)
     typ = norm_typ(typ)
+    kreis = norm_kreis(kreis)
     if slot_occupant(conn, slot) is not None:
         raise SlotTaken(tr("Platz {slot} ist belegt", slot=slot))
     eingesetzt_am = eingesetzt_am or now_ts()
     cur = conn.execute(
-        "INSERT INTO plant(sorte, hersteller, keimdatum, topf, notiz, slot, eingesetzt_am, typ)"
-        " VALUES (?,?,?,?,?,?,?,?)", (sorte, hersteller, keimdatum, topf, notiz, slot, eingesetzt_am, typ))
+        "INSERT INTO plant(sorte, hersteller, keimdatum, topf, notiz, slot, eingesetzt_am, typ, kreis)"
+        " VALUES (?,?,?,?,?,?,?,?,?)", (sorte, hersteller, keimdatum, topf, notiz, slot, eingesetzt_am, typ, kreis))
     pid = cur.lastrowid
     conn.execute("INSERT INTO plant_phase(plant_id, phase, ab) VALUES (?,?,?)", (pid, phase, eingesetzt_am))
     conn.commit()

@@ -611,4 +611,12 @@ EN: dict[str, str] = {
     "Noch keine geerntete Pflanze.": "No harvested plant yet.",
     "QR-Code für {0}": "QR code for {0}",
     "Alle Details": "All details",
+    "Kreis im Zelt": "Circle on the tent map",
+    "Farbe der Phase": "Colour of the phase",
+    "Letztes Foto": "Latest photo",
+    "Farbe": "Colour",
+    "Farbe {0}": "Colour {0}",
+    "Eigene Farbe": "Own colour",
+    "Eigene Farbe wählen": "Choose own colour",
+    "Kreis: bitte Phasenfarbe, Foto oder eine Farbe wählen": "Circle: please choose phase colour, photo or a colour",
 }

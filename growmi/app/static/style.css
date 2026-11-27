@@ -188,6 +188,20 @@ details[open] > summary::before { transform: rotate(45deg); }
   background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--ph) 55%, white), var(--ph) 52%,
     color-mix(in srgb, var(--ph) 70%, black) 100%);
   box-shadow: 0 10px 18px -8px color-mix(in srgb, var(--ph) 70%, black), 0 0 0 4px color-mix(in srgb, var(--ph) 22%, transparent); }
+.canopy.photo { overflow: hidden; background: var(--bg-alt);
+  box-shadow: 0 10px 18px -8px color-mix(in srgb, var(--ph) 70%, black), 0 0 0 4px color-mix(in srgb, var(--ph) 45%, transparent); }
+.canopy.photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.kreis-field { display: flex; flex-direction: column; gap: .2rem; }
+.kreis-field legend { color: var(--muted); font-size: .85rem; padding: 0 .4rem; }
+.swatches { display: flex; flex-wrap: wrap; gap: .55rem; padding: .3rem 0 .2rem; }
+.swatch { position: relative; width: 2.4rem; height: 2.4rem; border-radius: 50%; cursor: pointer; flex-direction: row;
+  background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--sw) 55%, white), var(--sw) 52%, color-mix(in srgb, var(--sw) 70%, black) 100%);
+  box-shadow: 0 0 0 1px var(--hairline); }
+.swatch input[type=radio] { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.swatch:has(input:checked) { box-shadow: 0 0 0 3px var(--bg-alt), 0 0 0 5px var(--text); }
+.swatch:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 4px; }
+.swatch.own { background: conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red); }
+.swatch.own input[type=color] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
 .canopy-empty { height: 45%; aspect-ratio: 1; border-radius: 50%; border: 2px dashed var(--border); }
 
 /* tables as cards */

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.30.0
+- Tent map: choose what the circle of a plant shows, when planting or under Stammdaten ändern: the colour of the phase (as before), one of eight colours or an own colour, or the latest photo of the plant. Without a photo it falls back to the phase colour.
+
 ## 0.29.1
 - Jar labels: ticking a plant or switching the format updates the preview at once. Printing shows only the labels, not the form.
 - After an update the browser loads the new stylesheet instead of its cached copy.

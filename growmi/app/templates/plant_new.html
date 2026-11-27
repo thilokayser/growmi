@@ -16,6 +16,7 @@
   <label><span>Sorte <span class="req" aria-hidden="true">*</span></span><input id="sorte" name="sorte" required value="{{ form.sorte or '' }}"></label>
   <label>Hersteller / Seedbank <input id="hersteller" name="hersteller" value="{{ form.hersteller or '' }}"></label>
   <label>Typ <select name="typ" id="typ"><option value="">–</option><option value="photo" {{ 'selected' if form.typ == 'photo' }}>Photoperiodisch</option><option value="auto" {{ 'selected' if form.typ == 'auto' }}>Autoflower</option></select></label>
+  {% with kreis = form.kreis_farbe if form.kreis == 'eigene' else form.kreis %}{% include "_kreis_field.html" %}{% endwith %}
   <label>Keimdatum <input type="date" name="keimdatum" value="{{ form.keimdatum or '' }}"></label>
   <label>Phase <select name="phase">{% for ph in phases %}<option value="{{ ph }}" {{ 'selected' if ph == form.phase }}>{{ tr(ph) }}</option>{% endfor %}</select></label>
   <label>Topf / Substrat <input name="topf" value="{{ form.topf or '' }}"></label>

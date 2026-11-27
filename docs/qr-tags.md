@@ -12,6 +12,12 @@ The quick pages are served on a separate LAN port **without Home Assistant login
 
 The secret is stored in the Growmi database and survives updates and restores. If you delete the add-on **without** a backup, the tags need reprinting.
 
+## Jar labels for harvested plants
+
+**Master data → Glas-Etiketten** (or the button on a harvested plant) prints one label per jar: strain, breeder and a small QR code. Pick the plants and the format, A4 sheet (60 × 30 mm, 3 per row) or label printer (62 × 29 mm, one label per page), then print. The strain name shrinks until it fits, it is never cut.
+
+The code opens `http://<host>:8100/s/<secret>/p/<id>`, a read-only profile of the plant: harvest date, dry yield, rating, harvest note and latest photo. It uses the same port and secret as the spot tags, so it works on the home network without login.
+
 ## 2. Print 3D tags (optional)
 
 ```sh

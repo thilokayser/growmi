@@ -6,6 +6,7 @@
   --accent: #a9e8c0; --on-accent: #0b1220; --danger: #f4a3b3; --on-danger: #0b1220;
   --link: #a9c4f7; --focus: #c9bcff;
   --glow-a: #34567d; --glow-b: #2a4f5c;
+  --paper-ink: #141c33; --paper-muted: #4d5b78;
   --ph-keimling: #f5d98b; --on-keimling: #0b1220;
   --ph-wachstum: #a9e8c0; --on-wachstum: #0b1220;
   --ph-bluete: #c3b1f7; --on-bluete: #0b1220;
@@ -286,6 +287,26 @@ table + form, table + details, table + .actions { margin-top: 1rem; }
   body { background: white; color: black; }
   .qr-label { border: 1px dashed black; break-inside: avoid; background: white; }
   .qr-label small { color: black; }
+}
+/* jar labels: real mm, same size on screen and paper */
+.jar-sheet { display: flex; flex-wrap: wrap; gap: 2mm; margin-top: 1.2rem; }
+.jar-label { box-sizing: border-box; display: flex; align-items: center; background: white; color: var(--paper-ink);
+  border-radius: 1.2mm; box-shadow: 0 0 0 1px var(--hairline); overflow: hidden; break-inside: avoid; }
+.jar-a4 .jar-label { width: 60mm; height: 30mm; padding: 3mm; gap: 3mm; }
+.jar-rolle .jar-label { width: 62mm; height: 29mm; padding: 2.5mm; gap: 3mm; }
+.jar-text { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 1mm; }
+.jar-sorte { font-weight: 700; font-size: 6.5mm; line-height: 1.08; overflow-wrap: normal; word-break: normal; }
+.jar-hst { font-size: 3mm; line-height: 1.15; color: var(--paper-muted); }
+.jar-qr { flex: none; width: 22mm; height: 22mm; }
+.jar-rolle .jar-qr { width: 23mm; height: 23mm; }
+.jar-qr svg { display: block; width: 100%; height: 100%; }
+.profile-img { display: block; width: min(20rem, 100%); height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 1rem; }
+@media print {
+  main:has(.jar-sheet) { margin: 0 !important; padding: 0 !important; max-width: none !important; }
+  main:has(.jar-sheet) > :not(.jar-sheet) { display: none !important; }
+  .jar-sheet { margin: 0; gap: 0; }
+  .jar-label { box-shadow: none; border-radius: 0; outline: .1mm dashed #bbb; }
+  .jar-rolle .jar-label { outline: none; break-after: page; }
 }
 .kiosk main { max-width: none; padding: 1rem 1.2rem; }
 .kiosk-head { display: flex; justify-content: space-between; align-items: baseline; }

@@ -36,7 +36,7 @@ def test_wrong_or_missing_secret_is_a_plain_404(pub):
 
 def test_only_quick_pages_are_reachable(pub):
     seed_plant(pub, 1)
-    for url in ("/stammdaten", "/export.json", "/auswertung", "/cockpit", "/pflanze/1", "/pflanze/neu", "/qr",
+    for url in ("/stammdaten", "/export.json", "/auswertung", "/cockpit", "/pflanze/1", "/pflanze/neu", "/qr", "/etiketten", "/p/x",
                 "/giessen", "/verlauf", "/healthz"):
         assert pub.client.get(P + url).status_code == 404, url
     for url in ("/stammdaten/duenger/1/loeschen", "/pflanze/1/loeschen", "/box/phase"):
@@ -77,6 +77,24 @@ def test_photo_and_note_and_tasks_work_publicly(pub):
 def test_empty_slot_shows_a_hint_instead_of_a_blocked_form(pub):
     r = pub.client.get(P + "/platz/3")
     assert r.status_code == 200 and "frei" in r.text and "pflanze/neu" not in r.text
+
+
+def test_jar_label_target_is_readable_publicly(pub):
+    a = seed_plant(pub, 1, "Alpha")
+    r = pub.client.get(P + f"/p/{a}")
+    assert r.status_code == 200 and "Alpha" in r.text and "Sensi" in r.text
+    assert "<form" not in r.text and f"/pflanze/{a}\"" not in r.text
+    assert pub.client.post(P + f"/p/{a}", data={}).status_code == 405
+
+
+def test_jar_labels_point_to_the_public_profile(web):
+    from app import plants
+    a = seed_plant(web, 1, "Alpha")
+    c = web.conn()
+    plants.finish_plant(c, a, "2026-11-20T10:00")
+    c.close()
+    t = web.client.get("/etiketten").text
+    assert t.count('class="jar-qr"') == 1 and 'aria-label="QR-Code für Alpha"' in t
 
 
 def test_kiosk_is_readable_publicly(pub):

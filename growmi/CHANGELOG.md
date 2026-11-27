@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.29.0
+- Jar labels (Master data → Glas-Etiketten, or the button on a harvested plant): strain, breeder and a small QR code per label. A4 sheet (60 × 30 mm) or label printer (62 × 29 mm). The strain name shrinks until it fits, it is never cut.
+- The QR code opens a read-only profile of the plant (harvest date, dry yield, rating, latest photo) on the LAN port, without login.
+
 ## 0.28.11
 - Mobile: analysis filters and view controls no longer overlap the bottom navigation.
 - Tent overview: see due tasks and alerts first, then plants and climate details. The summary links directly to the cockpit.

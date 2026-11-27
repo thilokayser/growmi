@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ p.sorte }}{% endblock %}
+{% block content %}
+<h1>{{ nick(p) }} <span class="chip ph-{{ phase }}">{{ tr(phase) }}</span>{% if p.typ %} <span class="chip chip-typ">{{ p.typ|typ }}</span>{% endif %}</h1>
+<p class="muted">{% if nick(p) != p.sorte %}{{ p.sorte }} · {% endif %}{{ p.hersteller }}</p>
+{% if photo %}<p><img class="profile-img" src="{{ root }}/fotos/t_{{ photo }}" width="320" height="320" alt="Letztes Foto {{ p.sorte }}"></p>{% endif %}
+<table class="num">
+  <tr><th scope="row">Keimdatum</th><td>{{ p.keimdatum|dt }}</td></tr>
+  {% if p.ausgezogen_am %}<tr><th scope="row">Geerntet</th><td>{{ p.ausgezogen_am|dt }}</td></tr>{% endif %}
+  <tr><th scope="row">Ertrag trocken</th><td>{{ '%g g' % p.trocken_g if p.trocken_g else '–' }}{% if p.nass_g %} (nass {{ '%g' % p.nass_g }} g){% endif %}</td></tr>
+  {% if p.bew_geschmack or p.bew_wirkung or p.bew_aufwand or p.trocknung_tage %}
+  <tr><th scope="row">Bewertung</th><td>Geschmack {{ p.bew_geschmack or '–' }} · Wirkung {{ p.bew_wirkung or '–' }} · Aufwand {{ p.bew_aufwand or '–' }}{% if p.trocknung_tage %} · Trocknung {{ p.trocknung_tage }} Tage{% endif %}</td></tr>
+  {% endif %}
+  {% if p.ernte_notiz %}<tr><th scope="row">Ernte-Notiz</th><td>{{ p.ernte_notiz }}</td></tr>{% endif %}
+</table>
+{% if not public %}<div class="actions"><a class="btn ghost" href="{{ root }}/pflanze/{{ p.id }}">Alle Details</a></div>{% endif %}
+{% endblock %}

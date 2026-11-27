@@ -63,6 +63,30 @@ def qr_sheet(request: Request):
     return render(request, "qr.html", labels=labels)
 
 
+@router.get("/p/{plant_id}")
+def profile(request: Request, plant_id: int, conn=Depends(get_conn)):
+    """Target of the jar label: what grew in the jar, read-only (also on the LAN port)."""
+    p = _plant_or_404(conn, plant_id)
+    photo = conn.execute("SELECT filename FROM photo WHERE plant_id=? ORDER BY ts DESC, id DESC LIMIT 1", (plant_id,)).fetchone()
+    return render(request, "steckbrief.html", p=p, phase=plants.current_phase(conn, plant_id),
+                  photo=photo["filename"] if photo else None)
+
+
+LABEL_FORMATS = ("a4", "rolle")
+
+
+@router.get("/etiketten")
+def jar_labels(request: Request, conn=Depends(get_conn)):
+    done = conn.execute("SELECT * FROM plant WHERE ausgezogen_am IS NOT NULL ORDER BY ausgezogen_am DESC, id DESC").fetchall()
+    picked = {int(i) for i in request.query_params.getlist("id") if i.isdigit()}
+    chosen = [p for p in done if p["id"] in picked] if "id" in request.query_params else done
+    fmt = request.query_params.get("format")
+    fmt = fmt if fmt in LABEL_FORMATS else "a4"
+    opts, ha, secret = request.app.state.options, request.app.state.ha, request.app.state.public_secret
+    labels = [{"p": p, "svg": qr.label_svg(qr.plant_url(opts, ha, secret, p["id"]))} for p in chosen]
+    return render(request, "etiketten.html", plants=done, chosen={p["id"] for p in chosen}, labels=labels, fmt=fmt)
+
+
 @router.get("/kiosk")
 def kiosk(request: Request, conn=Depends(get_conn)):
     ha = request.app.state.ha

@@ -93,6 +93,55 @@ def test_qr_print_page(web):
     assert 'class="qr-sheet"' in t
 
 
+def harvested(web, slot, sorte):
+    from app import plants
+    pid = seed_plant(web, slot, sorte)
+    c = web.conn()
+    plants.finish_plant(c, pid, "2026-11-20T10:00", trocken_g=42.0)
+    c.close()
+    return pid
+
+
+def test_plant_url_is_short_and_public(web):
+    assert qr.plant_url({"ha_url": "http://192.0.2.10:8123"}, web.ha, "abc", 7) == "http://192.0.2.10:8100/s/abc/p/7"
+    assert qr.label_svg("http://x/y").startswith("<svg") and "viewBox" in qr.label_svg("http://x/y")
+
+
+def test_jar_labels_list_only_harvested_plants(web):
+    a = harvested(web, 1, "Gorilla Glue #4")
+    seed_plant(web, 2, "Noch im Zelt")
+    t = web.client.get("/etiketten").text
+    assert "Gorilla Glue #4" in t and "Noch im Zelt" not in t
+    assert t.count('class="jar-label"') == 1 and "Sensi" in t and 'class="jar-sheet jar-a4"' in t
+    assert f'value="{a}" checked' in t
+
+
+def test_jar_labels_selection_and_format(web):
+    a = harvested(web, 1, "Alpha")
+    b = harvested(web, 2, "Beta")
+    t = web.client.get(f"/etiketten?id=&id={b}&format=rolle").text
+    assert t.count('class="jar-label"') == 1 and 'class="jar-sheet jar-rolle"' in t and "size: 62mm 29mm" in t
+    assert f'value="{b}" checked' in t and f'value="{a}" checked' not in t
+    none = web.client.get("/etiketten?id=").text
+    assert 'class="jar-label"' not in none and "Drucken" not in none
+    assert 'class="jar-sheet jar-a4"' in web.client.get("/etiketten?format=quatsch").text
+
+
+def test_harvested_plant_page_links_its_jar_label(web):
+    a = harvested(web, 1, "Alpha")
+    b = seed_plant(web, 2, "Beta")
+    assert f"/etiketten?id={a}" in web.client.get(f"/pflanze/{a}").text
+    assert "/etiketten?id=" not in web.client.get(f"/pflanze/{b}").text
+    assert 'href="/etiketten"' in web.client.get("/stammdaten").text
+
+
+def test_profile_page_shows_the_harvest(web):
+    a = harvested(web, 1, "Alpha")
+    t = web.client.get(f"/p/{a}").text
+    assert "Alpha" in t and "Sensi" in t and "42 g" in t and "20.11.2026" in t and f'href="/pflanze/{a}"' in t
+    assert web.client.get("/p/99").status_code == 404
+
+
 def test_kiosk_page_is_nav_free_and_refreshes(web):
     web.ha.states.update({"sensor.growbox_temperatur": "22.8", "sensor.growbox_vpd": "0.94",
                           "input_select.grow_phase": "Wachstum"})

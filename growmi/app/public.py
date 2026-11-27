@@ -4,9 +4,10 @@ import secrets
 
 from . import events
 
-# what the LAN-facing app for the QR tags may serve: the quick pages and nothing that edits master data
+# what the LAN-facing app for the QR tags may serve: the quick pages, the jar-label profile (/p/<id>)
+# and nothing that edits master data
 ALLOWED = re.compile(
-    r"^/(platz/\d+|kiosk|foto|fotos/[A-Za-z0-9._-]+|static/[A-Za-z0-9._/-]+|"
+    r"^/(platz/\d+|p/\d+|kiosk|foto|fotos/[A-Za-z0-9._-]+|static/[A-Za-z0-9._/-]+|"
     r"pflanze/\d+/(schnell|schnell/giessen|notiz)|aufgabe/\d+/(erledigt|spaeter))$")
 
 

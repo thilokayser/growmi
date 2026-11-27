@@ -28,6 +28,7 @@
   {% endif %}
   {% if p.ernte_notiz %}<tr><th scope="row">Ernte-Notiz</th><td>{{ p.ernte_notiz }}</td></tr>{% endif %}
 </table>
+{% if p.ausgezogen_am %}<div class="actions"><a class="btn ghost" href="{{ root }}/etiketten?id={{ p.id }}">Glas-Etikett drucken</a></div>{% endif %}
 
 <h2>Aufgaben</h2>
 {% if plant_tasks %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Glas-Etiketten{% endblock %}
+{% block content %}
+<h1>Glas-Etiketten</h1>
+<p class="muted">Für geerntete Pflanzen: Sorte, Hersteller und ein QR-Code, der den Steckbrief der Pflanze öffnet. Der Code funktioniert im Heimnetz ohne Anmeldung.</p>
+{% if plants %}
+<form method="get" action="{{ root }}/etiketten" class="jar-form">
+  <input type="hidden" name="id" value="">
+  <fieldset>
+    <legend>Pflanzen</legend>
+    {% for p in plants %}
+    <label class="check"><input type="checkbox" name="id" value="{{ p.id }}"{% if p.id in chosen %} checked{% endif %}> {{ p.sorte }}{% if p.hersteller %} · {{ p.hersteller }}{% endif %} <span class="muted">({{ p.ausgezogen_am[:10]|dt }})</span></label>
+    {% endfor %}
+  </fieldset>
+  <fieldset>
+    <legend>Format</legend>
+    <label class="check"><input type="radio" name="format" value="a4"{% if fmt == 'a4' %} checked{% endif %}> A4-Bogen, 60 × 30 mm</label>
+    <label class="check"><input type="radio" name="format" value="rolle"{% if fmt == 'rolle' %} checked{% endif %}> Etikettendrucker, 62 × 29 mm</label>
+  </fieldset>
+  <div class="actions"><button class="btn ghost">Vorschau aktualisieren</button>{% if labels %}<button type="button" class="btn" onclick="window.print()">Drucken</button>{% endif %}</div>
+</form>
+{% else %}
+<p>Noch keine geerntete Pflanze.</p>
+{% endif %}
+{% if fmt == 'rolle' %}<style>@media print { @page { size: 62mm 29mm; margin: 0; } }</style>
+{% else %}<style>@media print { @page { size: A4; margin: 10mm; } }</style>{% endif %}
+<div class="jar-sheet jar-{{ fmt }}">
+  {% for l in labels %}
+  <div class="jar-label">
+    <div class="jar-text"><div class="jar-sorte">{{ l.p.sorte }}</div>{% if l.p.hersteller %}<div class="jar-hst">{{ l.p.hersteller }}</div>{% endif %}</div>
+    <div class="jar-qr" role="img" aria-label="QR-Code für {{ l.p.sorte }}">{{ l.svg|safe }}</div>
+  </div>
+  {% endfor %}
+</div>
+<script>
+  (function () {
+    // the strain name is never cut: shrink it until every line and the longest word fit the text box
+    function fit(label) {
+      var box = label.querySelector(".jar-text"), s = label.querySelector(".jar-sorte"), h = label.querySelector(".jar-hst");
+      var mm = 6.5;
+      function set() { s.style.fontSize = mm + "mm"; if (h) h.style.fontSize = Math.min(3, Math.max(2, mm * 0.62)) + "mm"; }
+      set();
+      while (mm > 1.8 && (box.scrollHeight > box.clientHeight + 0.5 || s.scrollWidth > s.clientWidth + 0.5)) { mm -= 0.1; set(); }
+    }
+    function all() { document.querySelectorAll(".jar-label").forEach(fit); }
+    all();
+    window.addEventListener("beforeprint", all);
+  })();
+</script>
+{% endblock %}

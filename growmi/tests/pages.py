@@ -46,5 +46,5 @@ def populate(web) -> list[int]:
 def paths(ids: list[int]) -> list[str]:
     return ["/", "/cockpit", "/verlauf", "/auswertung", "/einkauf", "/bericht", "/planung", "/probleme", "/stammdaten/wochenplan",
             "/verschleiss", "/pflanze/neu", "/giessen", "/notiz", "/foto", "/fotos", "/heatmap", "/stammdaten",
-            "/stammdaten/duenger/1", "/wiederherstellen", "/platz/1", "/platz/2", "/qr", "/kiosk", "/einstellungen"] \
-        + [f"/pflanze/{i}" for i in ids] + [f"/pflanze/{i}/schnell" for i in ids]
+            "/stammdaten/duenger/1", "/wiederherstellen", "/platz/1", "/platz/2", "/qr", "/etiketten", "/kiosk", "/einstellungen"] \
+        + [f"/pflanze/{i}" for i in ids] + [f"/p/{i}" for i in ids] + [f"/pflanze/{i}/schnell" for i in ids]
